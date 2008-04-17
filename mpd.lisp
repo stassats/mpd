@@ -33,6 +33,8 @@
   (loop
      for line = (read-line stream nil)
      until (string= line "OK" :end1 2)
+     if (string= line "ACK" :end1 3) do
+       (error (subseq line 4))
      collect line))
 
 (defmacro with-mpd-connection ((var &rest options) &body body)
