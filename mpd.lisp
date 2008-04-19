@@ -9,9 +9,11 @@
 (defmacro make-class (name slots)
   `(defclass ,name ()
      ,(loop for i in slots
-	 collect `(,i :initform nil :initarg ,(to-keyword i)))))
+	 collect `(,i :initform nil :initarg ,(to-keyword i)
+		      :accessor ,(intern (concatenate 'string "TRACK-" (string i)))))))
 
-(make-class track (file title artist album date track time pos id))
+(make-class track (file title artist 
+			album date track time pos id genre))
 
 (defmethod print-object ((object track) stream)
   (print-unreadable-object (object stream :type t)
@@ -46,13 +48,11 @@
 (defun split-values (current-playing)
   (mapcan (lambda (x) 
 	    (destructuring-bind (key value) (split ": " x)
-	      (list (symbol-to-keyword key) value)))
+	      (list (to-keyword key) value)))
 	  current-playing))
 
 (defun parse-track (data)
   (apply 'make-instance 'track (split-values data)))
 
 (defun now-playing (connection)
-  (with-slots (title artist album date)
-      (parse-track (send-command connection "currentsong"))
-    (format nil "~A - ~A (~A~@[; ~A~])" artist title album date)))
+  (parse-track (send-command connection "currentsong")))

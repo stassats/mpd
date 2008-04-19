@@ -6,5 +6,17 @@
   (:use :cl :usocket :cl-ppcre)
   (:export
    :connect
-   :with-mpd-connection
-   :now-playing))
+   :with-mpd
+   :now-playing
+
+   :track
+   :track-file
+   :track-title
+   :track-artist
+   :track-album
+   :track-date
+   :track-track
+   :track-time
+   :track-pos
+   :track-id
+   :track-genre))
