@@ -1,3 +1,8 @@
+;;; -*- Mode: Lisp; Syntax: ANSI-Common-Lisp; Base: 10 -*-
+
+;;; This software is in the public domain and is
+;;; provided with absolutely no warranty.
+
 (in-package :mpd)
 
 (defparameter *defualt-host* "localhost")
@@ -12,7 +17,7 @@
 	 collect `(,i :initform nil :initarg ,(to-keyword i)
 		      :accessor ,(intern (concatenate 'string "TRACK-" (string i)))))))
 
-(make-class track (file title artist 
+(make-class track (file title artist
 			album date track time pos id genre))
 
 (defmethod print-object ((object track) stream)
@@ -36,17 +41,17 @@
      for line = (read-line stream nil)
      until (string= line "OK" :end1 2)
      if (string= line "ACK" :end1 3) do
-       (error (subseq line 4))
+     (error (subseq line 4))
      collect line))
 
 (defmacro with-mpd-connection ((var &rest options) &body body)
   `(let ((,var (connect ,@options)))
-     (unwind-protect 
+     (unwind-protect
 	  (progn ,@body)
        (socket-close ,var))))
 
 (defun split-values (current-playing)
-  (mapcan (lambda (x) 
+  (mapcan (lambda (x)
 	    (destructuring-bind (key value) (split ": " x)
 	      (list (to-keyword key) value)))
 	  current-playing))
