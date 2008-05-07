@@ -1,15 +1,16 @@
-;;; -*- Mode: Lisp; Syntax: ANSI-Common-Lisp; Base: 10 -*-
+;; -*- Mode: Lisp; Syntax: ANSI-Common-Lisp; Base: 10 -*-
 
-;;; This software is in the public domain and is
-;;; provided with absolutely no warranty.
+;; This software is in the public domain and is
+;; provided with absolutely no warranty.
 
 (in-package :mpd)
 
 (defparameter *defualt-host* "localhost")
 (defparameter *default-port* 6600)
 
-(defun to-keyword (symbol)
-  (intern (string-upcase (string symbol)) :keyword))
+(eval-when (:compile-toplevel)
+  (defun to-keyword (symbol)
+    (intern (string-upcase (string symbol)) :keyword)))
 
 (defmacro make-class (name slots)
   `(defclass ,name ()
