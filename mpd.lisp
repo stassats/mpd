@@ -45,7 +45,7 @@
      (error (subseq line 4))
      collect line))
 
-(defmacro with-mpd-connection ((var &rest options) &body body)
+(defmacro with-mpd ((var &rest options) &body body)
   `(let ((,var (connect ,@options)))
      (unwind-protect
 	  (progn ,@body)
