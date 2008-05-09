@@ -8,7 +8,7 @@
 (defparameter *defualt-host* "localhost")
 (defparameter *default-port* 6600)
 
-(eval-when (:compile-toplevel)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (defun to-keyword (symbol)
     (intern (string-upcase (string symbol)) :keyword)))
 
@@ -16,7 +16,7 @@
   `(defclass ,name ()
      ,(loop for i in slots
 	 collect `(,i :initform nil :initarg ,(to-keyword i)
-		      :accessor ,(intern (concatenate 'string "TRACK-" (string i)))))))
+		      :accessor ,(intern (format nil "~A-~A" name i))))))
 
 (make-class track (file title artist
 			album date track time pos id genre))
