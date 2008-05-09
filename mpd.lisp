@@ -9,8 +9,9 @@
 (defparameter *default-port* 6600)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun to-keyword (symbol)
-    (intern (string-upcase (string symbol)) :keyword)))
+  (defun to-keyword (x)
+    "Coerce a string, a symbol, or a character to a keyword"
+    (intern (string-upcase (string x)) :keyword)))
 
 (defmacro make-class (name slots)
   `(defclass ,name ()
