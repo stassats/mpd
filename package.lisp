@@ -6,8 +6,12 @@
   (:use :cl :usocket :cl-ppcre)
   (:export
    :connect
+   :disconnect
    :with-mpd
+
    :now-playing
+   :get-playlist
+   :add-to-playlist
 
    :track
    :track-file

@@ -102,3 +102,8 @@
    (lambda (entry)
      (regex-replace "^\\d+:" entry ""))
    (send-command "playlist" connection)))
+
+(defun add-to-playlist (what connection)
+  "Add file or directory to the current playlist."
+  (send-command (concatenate 'string "add " what)
+		connection))
