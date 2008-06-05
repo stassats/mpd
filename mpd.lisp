@@ -13,14 +13,17 @@
     "Coerce a string, a symbol, or a character to a keyword"
     (intern (string-upcase (string x)) :keyword)))
 
-(defmacro make-class (name slots)
-  `(defclass ,name ()
+(defmacro make-class (name superclasses slots)
+  `(defclass ,name ,superclasses
      ,(loop for i in slots
 	 collect `(,i :initform nil :initarg ,(to-keyword i)
 		      :accessor ,(intern (format nil "~A-~A" name i))))))
 
-(make-class track (file title artist
-			album date track time pos id genre))
+(make-class track () (file title artist album
+			   genre date track time))
+
+(make-class playlist (track)
+	    (pos id))
 
 (defmethod print-object ((object track) stream)
   (print-unreadable-object (object stream :type t)
@@ -32,11 +35,8 @@
     (values connection
 	    (read-answer (socket-stream connection)))))
 
-(defun send-command (connection command)
-  (let ((stream (socket-stream connection)))
-    (write-line command stream)
-    (force-output stream)
-    (read-answer stream)))
+(defun disconnect (connection)
+  (socket-close connection))
 
 (defun read-answer (stream)
   (loop
@@ -50,7 +50,36 @@
   `(let ((,var (connect ,@options)))
      (unwind-protect
 	  (progn ,@body)
-       (socket-close ,var))))
+       (disconnect ,var))))
+
+(defun send-command (command connection)
+  (let ((stream (socket-stream connection)))
+    (if (open-stream-p stream)
+	(progn
+	  (write-line command stream)
+	  (force-output stream)
+	  (read-answer stream))
+	(error (format nil "The stream ~A is not opened" stream)))))
+
+(defmacro generate-commands (&rest commands)
+  `(progn
+     ,@(mapcar (lambda (x)
+		 (let ((name
+			(if (symbolp x)
+			    x
+			    (car x)))
+		       (command
+			(if (symbolp x)
+			    (string-downcase (string x))
+			    (cadr x))))
+		   `(defun ,name (connection)
+		      (send-command ,command connection))))
+	       commands)))
+
+(generate-commands
+ (current-song "currentsong")
+ pause stop next previous clear
+ ping kill)
 
 (defun split-values (current-playing)
   (mapcan (lambda (x)
@@ -59,7 +88,13 @@
 	  current-playing))
 
 (defun parse-track (data)
-  (apply 'make-instance 'track (split-values data)))
+  (apply 'make-instance 'playlist (split-values data)))
 
 (defun now-playing (connection)
-  (parse-track (send-command connection "currentsong")))
+  (parse-track (send-command "currentsong" connection)))
+
+(defun get-playlist (connection)
+  (mapcar
+   (lambda (entry)
+     (regex-replace "^\\d+:" entry ""))
+   (send-command "playlist" connection)))
