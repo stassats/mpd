@@ -40,14 +40,12 @@
   (socket-close connection))
 
 (defun read-answer (stream)
-  (or
-   (loop
-      for line = (read-line stream nil)
-      until (string= line "OK" :end1 2)
-      if (string= line "ACK" :end1 3) do
-      (error (subseq line 4))
-      collect line)
-   t))
+  (loop
+     for line = (read-line stream nil)
+     until (string= line "OK" :end1 2)
+     if (string= line "ACK" :end1 3) do
+     (error (subseq line 4))
+     collect line))
 
 (defmacro with-mpd ((var &rest options) &body body)
   `(let ((,var (connect ,@options)))
@@ -69,7 +67,7 @@
   (mapcan (lambda (x)
 	    (destructuring-bind (key value) (split ": " x)
 	      (list (to-keyword key) value)))
-	 values))
+	  values))
 
 (defun parse-track (data)
   (apply 'make-instance 'playlist (split-values data)))
@@ -94,7 +92,7 @@
 		     connection))))
 
 (defcommand current-track ()
-  "Return the metadata of the current track." 
+  "Return the metadata of the current track."
   "currentsong")
 
 (defcommand pause ()
@@ -149,4 +147,31 @@
   (format nil "update ~A" path))
 
 (defun status (connection)
+  "Return status of MPD."
   (split-values (send-command "status" connection)))
+
+(defun stats (connection)
+  "Return statisics."
+  (split-values (send-command "stats" connection)))
+
+(defun outputs (connection)
+  "Return information about all outputs."
+  (split-values (send-command "outputs" connection)))
+
+(defun commands (connection)
+  "Return list of available commands."
+  (mapcar
+   (lambda (entry)
+     (regex-replace "^command: " entry ""))
+   (send-command "commands" connection)))
+
+(defun not-commands (connection)
+  "Return list of commands to which the current user does not have access."
+  (mapcar
+   (lambda (entry)
+     (regex-replace "^command: " entry ""))
+   (send-command "notcommands" connection)))
+
+(defcommand mpd-find (type what)
+  "Find tracks in the database with a case sensitive, exact match."
+  (format nil "find ~A ~A" type what))
