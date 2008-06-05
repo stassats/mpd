@@ -31,7 +31,7 @@
       (format stream "~A - ~A (~A)" artist title album))))
 
 (defun connect (&key (host *defualt-host*) (port *default-port*))
-  "Connect to the MPD."
+  "Connect to MPD."
   (let ((connection (socket-connect host port)))
     (values connection
 	    (read-answer (socket-stream connection)))))
@@ -40,12 +40,14 @@
   (socket-close connection))
 
 (defun read-answer (stream)
-  (loop
-     for line = (read-line stream nil)
-     until (string= line "OK" :end1 2)
-     if (string= line "ACK" :end1 3) do
-     (error (subseq line 4))
-     collect line))
+  (or
+   (loop
+      for line = (read-line stream nil)
+      until (string= line "OK" :end1 2)
+      if (string= line "ACK" :end1 3) do
+      (error (subseq line 4))
+      collect line)
+   t))
 
 (defmacro with-mpd ((var &rest options) &body body)
   `(let ((,var (connect ,@options)))
@@ -54,7 +56,7 @@
        (disconnect ,var))))
 
 (defun send-command (command connection)
-  "Send command to the MPD."
+  "Send command to MPD."
   (let ((stream (socket-stream connection)))
     (if (open-stream-p stream)
 	(progn
@@ -63,38 +65,18 @@
 	  (read-answer stream))
 	(error (format nil "The stream ~A is not opened" stream)))))
 
-(defmacro generate-commands (&rest commands)
-  `(progn
-     ,@(mapcar (lambda (x)
-		 (let ((name
-			(if (symbolp x)
-			    x
-			    (car x)))
-		       (command
-			(if (symbolp x)
-			    (string-downcase (string x))
-			    (cadr x))))
-		   `(defun ,name (connection)
-		      (send-command ,command connection))))
-	       commands)))
-
-(generate-commands
- (current-song "currentsong")
- pause stop next previous clear
- ping kill)
-
-(defun split-values (current-playing)
+(defun split-values (values)
   (mapcan (lambda (x)
 	    (destructuring-bind (key value) (split ": " x)
 	      (list (to-keyword key) value)))
-	  current-playing))
+	 values))
 
 (defun parse-track (data)
   (apply 'make-instance 'playlist (split-values data)))
 
 (defun now-playing (connection)
   "Return instance of playlist with current song."
-  (parse-track (send-command "currentsong" connection)))
+  (parse-track (current-track connection)))
 
 (defun get-playlist (connection)
   "Return list of files in the current playlist."
@@ -103,7 +85,68 @@
      (regex-replace "^\\d+:" entry ""))
    (send-command "playlist" connection)))
 
-(defun add-to-playlist (what connection)
+(defmacro defcommand (name parameters &body body)
+  (multiple-value-bind (forms decl doc) (parse-body body :documentation t)
+    `(defun ,name (,@parameters connection)
+       ,@decl
+       ,doc
+       (send-command ,@forms
+		     connection))))
+
+(defcommand current-track ()
+  "Return the metadata of the current track." 
+  "currentsong")
+
+(defcommand pause ()
+  "Toggle pause / resume playing."
+  "pause")
+
+(defcommand stop ()
+  "Stop playing."
+  "stop")
+
+(defcommand next ()
+  "Play next track in the playlist."
+  "next")
+
+(defcommand previous ()
+  "Play previous track in the playlist."
+  "previous")
+
+(defcommand clear ()
+  "Clear the current playlist."
+  "clear")
+
+(defcommand ping ()
+  "Send ping to MPD."
+  "ping")
+
+(defcommand kill ()
+  "Stop MPD in a safe way.")
+
+(defcommand add (what)
   "Add file or directory to the current playlist."
-  (send-command (concatenate 'string "add " what)
-		connection))
+  (format nil "add ~A" what))
+
+(defcommand save-playlist (filename)
+  "Save the current playlist to the file in the playlist directory."
+  (format nil "save ~A" filename))
+
+(defcommand load-playlist "Load playlist from file."
+  "load"
+  filename)
+
+(defcommand rename-playlist (name new-name)
+  "Rename playlist."
+  (format nil "rename ~A ~A" name new-name))
+
+(defcommand delete-track (number connection)
+  "Delete track from playlist."
+  (format nil "delete ~A" number))
+
+(defcommand update (path)
+  "Scan directory for music files and add them to the database."
+  (format nil "update ~A" path))
+
+(defun status (connection)
+  (split-values (send-command "status" connection)))

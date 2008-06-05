@@ -3,15 +3,31 @@
 (in-package :cl-user)
 
 (defpackage :mpd
-  (:use :cl :usocket :cl-ppcre)
+  (:use :cl :usocket :cl-ppcre
+	:alexandria)
   (:export
    :connect
    :disconnect
    :with-mpd
 
+   :ping
+   :kill
+   :status
+
+   :pause
+   :stop
+   :previous
+   :next
+   
    :now-playing
    :get-playlist
-   :add-to-playlist
+   :add
+   :clear
+   :delete-track
+   :save-playlist
+   :load-plalist
+   :rename-playlist
+   :update
 
    :track
    :track-file
