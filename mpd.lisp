@@ -31,6 +31,7 @@
       (format stream "~A - ~A (~A)" artist title album))))
 
 (defun connect (&key (host *defualt-host*) (port *default-port*))
+  "Connect to the MPD."
   (let ((connection (socket-connect host port)))
     (values connection
 	    (read-answer (socket-stream connection)))))
@@ -53,6 +54,7 @@
        (disconnect ,var))))
 
 (defun send-command (command connection)
+  "Send command to the MPD."
   (let ((stream (socket-stream connection)))
     (if (open-stream-p stream)
 	(progn
@@ -91,9 +93,11 @@
   (apply 'make-instance 'playlist (split-values data)))
 
 (defun now-playing (connection)
+  "Return instance of playlist with current song."
   (parse-track (send-command "currentsong" connection)))
 
 (defun get-playlist (connection)
+  "Return list of files in the current playlist."
   (mapcar
    (lambda (entry)
      (regex-replace "^\\d+:" entry ""))
