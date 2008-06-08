@@ -22,14 +22,20 @@
    :now-playing
    :get-playlist
    :add
-   :clear
+   :clear-playlist
    :delete-track
    :save-playlist
    :load-plalist
    :rename-playlist
    :update
+   :playlist-info
 
    :track
+   :file
+   :title
+   :artist
+   :album
+
    :track-file
    :track-title
    :track-artist

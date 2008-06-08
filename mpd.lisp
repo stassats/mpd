@@ -36,9 +36,6 @@
     (values connection
 	    (read-answer (socket-stream connection)))))
 
-(defun disconnect (connection)
-  (socket-close connection))
-
 (defun read-answer (stream)
   (loop
      for line = (read-line stream nil)
@@ -63,18 +60,36 @@
 	  (read-answer stream))
 	(error (format nil "The stream ~A is not opened" stream)))))
 
+(defun split-value (value)
+  (let ((match
+	 (nth-value 1 (scan-to-strings "^(.+?): (.+)" value))))
+    (values (aref match 0)
+	    (aref match 1))))
+
 (defun split-values (values)
   (mapcan (lambda (x)
-	    (destructuring-bind (key value) (split ": " x)
+	    (multiple-value-bind (key value) (split-value x)
 	      (list (to-keyword key) value)))
 	  values))
 
 (defun parse-track (data)
   (apply 'make-instance 'playlist (split-values data)))
 
-(defun now-playing (connection)
-  "Return instance of playlist with current song."
-  (parse-track (current-track connection)))
+(defun parse-list (list)
+  (let (track)
+    (mapcan (lambda (x)
+	      (multiple-value-bind (key value) (split-value x)
+		(setf key (to-keyword key))
+		(if (and track (eq key :file))
+		    (prog1
+			(list (apply 'make-instance 'playlist track))
+		      (setf track
+			    (list key value)))
+		    (progn
+		      (push value track)
+		      (push key track)
+		      nil))))
+	    list)))
 
 (defun get-playlist (connection)
   "Return list of files in the current playlist."
@@ -88,90 +103,105 @@
     `(defun ,name (,@parameters connection)
        ,@decl
        ,doc
-       (send-command ,@forms
-		     connection))))
+       (macrolet ((send (command)
+		    `(send-command ,command
+				  connection)))
+	        ,@forms))))
 
-(defcommand current-track ()
-  "Return the metadata of the current track."
-  "currentsong")
+(defcommand disconnect ()
+  "Close connection."
+  (socket-close connection))
+
+(defcommand now-playing ()
+  "Return instance of playlist with current song."
+  (parse-track (send "currentsong")))
 
 (defcommand pause ()
   "Toggle pause / resume playing."
-  "pause")
+  (send "pause"))
 
 (defcommand stop ()
   "Stop playing."
-  "stop")
+  (send "stop"))
 
 (defcommand next ()
   "Play next track in the playlist."
-  "next")
+  (send "next"))
 
 (defcommand previous ()
   "Play previous track in the playlist."
-  "previous")
+  (send "previous"))
 
-(defcommand clear ()
+(defcommand clear-playlist ()
   "Clear the current playlist."
-  "clear")
+  (send "clear"))
 
 (defcommand ping ()
   "Send ping to MPD."
-  "ping")
+  (send "ping"))
 
 (defcommand kill ()
-  "Stop MPD in a safe way.")
+  "Stop MPD in a safe way."
+  (send "kill"))
 
-(defcommand add (what)
+(defmethod add ((what track) connection)
+  (add (track-file what) connection))
+
+(defmethod add ((what string) connection)
   "Add file or directory to the current playlist."
-  (format nil "add ~A" what))
+  (send-command (format nil "add ~a" what) connection))
 
 (defcommand save-playlist (filename)
   "Save the current playlist to the file in the playlist directory."
-  (format nil "save ~A" filename))
+  (send (format nil "save ~A" filename)))
 
-(defcommand load-playlist "Load playlist from file."
-  "load"
-  filename)
+(defcommand load-playlist (filename)
+  "Load playlist from file."
+  (send (format nil "load ~A" filename)))
 
 (defcommand rename-playlist (name new-name)
   "Rename playlist."
-  (format nil "rename ~A ~A" name new-name))
+  (send (format nil "rename ~A ~A" name new-name)))
 
-(defcommand delete-track (number connection)
+(defcommand delete-track (number)
   "Delete track from playlist."
-  (format nil "delete ~A" number))
+  (send (format nil "delete ~A" number)))
 
 (defcommand update (path)
   "Scan directory for music files and add them to the database."
-  (format nil "update ~A" path))
+  (send (format nil "update ~A" path)))
 
-(defun status (connection)
+(defcommand status ()
   "Return status of MPD."
-  (split-values (send-command "status" connection)))
+  (split-values (send "status")))
 
-(defun stats (connection)
+(defcommand stats ()
   "Return statisics."
-  (split-values (send-command "stats" connection)))
+  (split-values (send "stats")))
 
-(defun outputs (connection)
+(defcommand outputs ()
   "Return information about all outputs."
-  (split-values (send-command "outputs" connection)))
+  (split-values (send "outputs")))
 
-(defun commands (connection)
+(defcommand commands ()
   "Return list of available commands."
   (mapcar
    (lambda (entry)
-     (regex-replace "^command: " entry ""))
-   (send-command "commands" connection)))
+     (nth-value 1 (split-value entry)))
+   (send "commands")))
 
-(defun not-commands (connection)
+(defcommand not-commands ()
   "Return list of commands to which the current user does not have access."
   (mapcar
    (lambda (entry)
-     (regex-replace "^command: " entry ""))
-   (send-command "notcommands" connection)))
+     (nth-value 1 (split-value entry)))
+   (send "notcommands")))
 
 (defcommand mpd-find (type what)
   "Find tracks in the database with a case sensitive, exact match."
-  (format nil "find ~A ~A" type what))
+  (send (format nil "find ~A \"~A\"" type what)))
+
+(defcommand playlist-info ()
+  "Return content of the current playlist."
+  (parse-list
+   (send "playlistinfo")))
