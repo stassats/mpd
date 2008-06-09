@@ -15,10 +15,11 @@
    :status
 
    :pause
+   :play
    :stop
    :previous
    :next
-   
+
    :now-playing
    :get-playlist
    :add

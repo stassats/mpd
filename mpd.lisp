@@ -91,22 +91,15 @@
 		      nil))))
 	    list)))
 
-(defun get-playlist (connection)
-  "Return list of files in the current playlist."
-  (mapcar
-   (lambda (entry)
-     (regex-replace "^\\d+:" entry ""))
-   (send-command "playlist" connection)))
-
 (defmacro defcommand (name parameters &body body)
   (multiple-value-bind (forms decl doc) (parse-body body :documentation t)
-    `(defun ,name (,@parameters connection)
+    `(defun ,name (connection ,@parameters)
        ,@decl
        ,doc
        (macrolet ((send (command)
 		    `(send-command ,command
-				  connection)))
-	        ,@forms))))
+				   connection)))
+	 ,@forms))))
 
 (defcommand disconnect ()
   "Close connection."
@@ -116,9 +109,15 @@
   "Return instance of playlist with current song."
   (parse-track (send "currentsong")))
 
+;; Control
+
 (defcommand pause ()
   "Toggle pause / resume playing."
   (send "pause"))
+
+(defcommand play (&optional song-number)
+  "Begin playing the playlist starting from song-number, default is 0."
+  (send (format nil "listallinfo~@[ ~A~]" song-number)))
 
 (defcommand stop ()
   "Stop playing."
@@ -132,20 +131,21 @@
   "Play previous track in the playlist."
   (send "previous"))
 
+;; Playlist
+
+(defcommand get-playlist ()
+  "Return list of files in the current playlist."
+  (mapcar
+   (lambda (x) (nth-value 1 (split-value x)))
+   (send "playlist")))
+
 (defcommand clear-playlist ()
   "Clear the current playlist."
   (send "clear"))
 
-(defcommand ping ()
-  "Send ping to MPD."
-  (send "ping"))
-
-(defcommand kill ()
-  "Stop MPD in a safe way."
-  (send "kill"))
-
 (defmethod add ((what track) connection)
   (add (track-file what) connection))
+
 
 (defmethod add ((what string) connection)
   "Add file or directory to the current playlist."
@@ -163,13 +163,24 @@
   "Rename playlist."
   (send (format nil "rename ~A ~A" name new-name)))
 
+(defcommand playlist-info (&optional id)
+  "Return content of the current playlist."
+  (parse-list
+   (send (format nil "playlistinfo~@[ ~A~]" id))))
+
 (defcommand delete-track (number)
   "Delete track from playlist."
   (send (format nil "delete ~A" number)))
 
-(defcommand update (path)
-  "Scan directory for music files and add them to the database."
-  (send (format nil "update ~A" path)))
+(defcommand ping ()
+  "Send ping to MPD."
+  (send "ping"))
+
+(defcommand kill ()
+  "Stop MPD in a safe way."
+  (send "kill"))
+
+
 
 (defcommand status ()
   "Return status of MPD."
@@ -197,11 +208,15 @@
      (nth-value 1 (split-value entry)))
    (send "notcommands")))
 
+;; Database
+
+(defcommand update (&optional path)
+  "Scan directory for music files and add them to the database."
+  (send (format nil "update~@[ ~A~]" path)))
+
 (defcommand mpd-find (type what)
   "Find tracks in the database with a case sensitive, exact match."
   (send (format nil "find ~A \"~A\"" type what)))
 
-(defcommand playlist-info ()
-  "Return content of the current playlist."
-  (parse-list
-   (send "playlistinfo")))
+(defcommand list-all-info (&optional path)
+  (send (format nil "listallinfo~@[ ~A~]" path)))
