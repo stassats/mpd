@@ -3,9 +3,10 @@
 (in-package :cl-user)
 
 (defpackage :mpd
-  (:use :cl :usocket :cl-ppcre
-	:alexandria)
+  (:use :cl :usocket :alexandria)
   (:export
+   :*defualt-host*
+   :*default-port*
    :connect
    :disconnect
    :with-mpd
@@ -30,12 +31,11 @@
    :rename-playlist
    :update
    :playlist-info
-
-   :track
-   :file
-   :title
-   :artist
-   :album
+   :outputs
+   :set-volume
+   :tag-types
+   :list-all
+   :ls-info
 
    :track-file
    :track-title
@@ -44,6 +44,7 @@
    :track-date
    :track-track
    :track-time
-   :track-pos
-   :track-id
-   :track-genre))
+   :track-genre
+
+   :playlist-pos
+   :playlist-id))

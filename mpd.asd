@@ -9,7 +9,6 @@
   :name "mpd"
   :description "MPD client"
   :serial t
-  :depends-on (:usocket :cl-ppcre
-			:alexandria)
+  :depends-on (:usocket :alexandria)
   :components ((:file "package")
 	       (:file "mpd")))

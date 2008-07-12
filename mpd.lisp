@@ -1,12 +1,12 @@
-;; -*- Mode: Lisp; Syntax: ANSI-Common-Lisp; Base: 10 -*-
+;;; -*- Mode: Lisp; Syntax: ANSI-Common-Lisp; Base: 10 -*-
 
-;; This software is in the public domain and is
-;; provided with absolutely no warranty.
+;;; This software is in the public domain and is
+;;; provided with absolutely no warranty.
 
 (in-package :mpd)
 
-(defparameter *defualt-host* "localhost")
-(defparameter *default-port* 6600)
+(defvar *defualt-host* "localhost")
+(defvar *default-port* 6600)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun to-keyword (x)
@@ -20,10 +20,9 @@
 		      :accessor ,(intern (format nil "~A-~A" name i))))))
 
 (make-class track () (file title artist album
-			   genre date track time))
+                           genre date track time))
 
-(make-class playlist (track)
-	    (pos id))
+(make-class playlist (track) (pos id))
 
 (defmethod print-object ((object track) stream)
   (print-unreadable-object (object stream :type t)
@@ -58,13 +57,12 @@
 	  (write-line command stream)
 	  (force-output stream)
 	  (read-answer stream))
-	(error (format nil "The stream ~A is not opened" stream)))))
+	(error (format nil "The stream ~A is not opened." stream)))))
 
 (defun split-value (value)
-  (let ((match
-	 (nth-value 1 (scan-to-strings "^(.+?): (.+)" value))))
-    (values (aref match 0)
-	    (aref match 1))))
+  (let ((column-position (position #\: value)))
+    (values (subseq value 0 column-position)
+	    (subseq value (+ 2 column-position)))))
 
 (defun split-values (values)
   (mapcan (lambda (x)
@@ -109,7 +107,7 @@
   "Return instance of playlist with current song."
   (parse-track (send "currentsong")))
 
-;; Control
+;;; Control
 
 (defcommand pause ()
   "Toggle pause / resume playing."
@@ -117,7 +115,7 @@
 
 (defcommand play (&optional song-number)
   "Begin playing the playlist starting from song-number, default is 0."
-  (send (format nil "listallinfo~@[ ~A~]" song-number)))
+  (send (format nil "play~@[ ~A~]" song-number)))
 
 (defcommand stop ()
   "Stop playing."
@@ -143,12 +141,13 @@
   "Clear the current playlist."
   (send "clear"))
 
-(defmethod add ((what track) connection)
+(defgeneric add (connection what)
+  (:documentation "Add file or directory to the current playlist."))
+
+(defmethod add (connection (what track))
   (add (track-file what) connection))
 
-
-(defmethod add ((what string) connection)
-  "Add file or directory to the current playlist."
+(defmethod add (connection (what string))
   (send-command (format nil "add ~a" what) connection))
 
 (defcommand save-playlist (filename)
@@ -180,8 +179,6 @@
   "Stop MPD in a safe way."
   (send "kill"))
 
-
-
 (defcommand status ()
   "Return status of MPD."
   (split-values (send "status")))
@@ -208,7 +205,7 @@
      (nth-value 1 (split-value entry)))
    (send "notcommands")))
 
-;; Database
+;;; Database
 
 (defcommand update (&optional path)
   "Scan directory for music files and add them to the database."
@@ -220,3 +217,46 @@
 
 (defcommand list-all-info (&optional path)
   (send (format nil "listallinfo~@[ ~A~]" path)))
+
+(defun parse-dirs (list)
+  (let (track)
+    (mapcan (lambda (x)
+	      (multiple-value-bind (key value) (split-value x)
+                (setf key (to-keyword key))
+                (if (and track (eq key :directory))
+		    (prog1
+			(list track)
+		      (setf track
+			    (list value)))
+		    (progn
+		      (push value track)
+		      nil))))
+	    list)))
+
+(defcommand list-all (&optional path)
+  (parse-dirs
+   (send (format nil "listall~@[ ~A~]" path))))
+
+(defcommand ls-info (&optional path)
+  "Show contents of directory."
+  (split-values
+   (send(format nil "lsinfo~@[ ~A~]" path))))
+
+(defcommand set-volume (value)
+  "Set the volume to the value between 0-100."
+  (declare ((integer 0 100) value))
+  (send (format nil "setvol ~a" value)))
+
+(defcommand tag-types ()
+  "Get a list of available metadata types."
+  (mapcar
+   (lambda (entry)
+     (nth-value 1 (split-value entry)))
+   (send "tagtypes")))
+
+(defcommand url-handlers ()
+  "Get a list of available URL handlers."
+  (mapcar
+   (lambda (entry)
+     (nth-value 1 (split-value entry)))
+   (send "urlhandlers")))
