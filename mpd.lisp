@@ -19,9 +19,7 @@
 	 collect `(,i :initform nil :initarg ,(to-keyword i)
 		      :accessor ,(intern (format nil "~A-~A" name i))))))
 
-(make-class track () (file title artist album
-                           genre date track time))
-
+(make-class track () (file title artist album genre date track time))
 (make-class playlist (track) (pos id))
 
 (defmethod print-object ((object track) stream)
@@ -89,13 +87,28 @@
 		      nil))))
 	    list)))
 
+(defun parse-dirs (list)
+  (let (track)
+    (mapcan (lambda (x)
+	      (multiple-value-bind (key value) (split-value x)
+                (setf key (to-keyword key))
+                (if (and track (eq key :directory))
+		    (prog1
+			(list track)
+		      (setf track
+			    (list value)))
+		    (progn
+		      (push value track)
+		      nil))))
+	    list)))
+
 (defmacro defcommand (name parameters &body body)
   (multiple-value-bind (forms decl doc) (parse-body body :documentation t)
     `(defun ,name (connection ,@parameters)
-       ,@decl
-       ,doc
-       (macrolet ((send (command)
-		    `(send-command ,command
+       ,@decl ,doc
+       (macrolet ((send (&rest commands)
+		    `(send-command (format nil "~@{~A~^ ~}" 
+					   ,@(remove-if #'null commands))
 				   connection)))
 	 ,@forms))))
 
@@ -115,7 +128,7 @@
 
 (defcommand play (&optional song-number)
   "Begin playing the playlist starting from song-number, default is 0."
-  (send (format nil "play~@[ ~A~]" song-number)))
+  (send "play" song-number))
 
 (defcommand stop ()
   "Stop playing."
@@ -152,24 +165,24 @@
 
 (defcommand save-playlist (filename)
   "Save the current playlist to the file in the playlist directory."
-  (send (format nil "save ~A" filename)))
+  (send "save" filename))
 
 (defcommand load-playlist (filename)
   "Load playlist from file."
-  (send (format nil "load ~A" filename)))
+  (send "load" filename))
 
 (defcommand rename-playlist (name new-name)
   "Rename playlist."
-  (send (format nil "rename ~A ~A" name new-name)))
+  (send "rename" name new-name))
 
 (defcommand playlist-info (&optional id)
   "Return content of the current playlist."
   (parse-list
-   (send (format nil "playlistinfo~@[ ~A~]" id))))
+   (send "playlistinfo" id)))
 
 (defcommand delete-track (number)
   "Delete track from playlist."
-  (send (format nil "delete ~A" number)))
+  (send "delete" number))
 
 (defcommand ping ()
   "Send ping to MPD."
@@ -209,43 +222,28 @@
 
 (defcommand update (&optional path)
   "Scan directory for music files and add them to the database."
-  (send (format nil "update~@[ ~A~]" path)))
+  (send "update" path))
 
 (defcommand mpd-find (type what)
   "Find tracks in the database with a case sensitive, exact match."
-  (send (format nil "find ~A \"~A\"" type what)))
+  (send "find" type what))
 
 (defcommand list-all-info (&optional path)
-  (send (format nil "listallinfo~@[ ~A~]" path)))
-
-(defun parse-dirs (list)
-  (let (track)
-    (mapcan (lambda (x)
-	      (multiple-value-bind (key value) (split-value x)
-                (setf key (to-keyword key))
-                (if (and track (eq key :directory))
-		    (prog1
-			(list track)
-		      (setf track
-			    (list value)))
-		    (progn
-		      (push value track)
-		      nil))))
-	    list)))
+  (send "listallinfo" path))
 
 (defcommand list-all (&optional path)
   (parse-dirs
-   (send (format nil "listall~@[ ~A~]" path))))
+   (send "listall" path)))
 
 (defcommand ls-info (&optional path)
   "Show contents of directory."
   (split-values
-   (send(format nil "lsinfo~@[ ~A~]" path))))
+   (send "lsinfo" path)))
 
 (defcommand set-volume (value)
   "Set the volume to the value between 0-100."
   (declare ((integer 0 100) value))
-  (send (format nil "setvol ~a" value)))
+  (send "setvol" value))
 
 (defcommand tag-types ()
   "Get a list of available metadata types."
