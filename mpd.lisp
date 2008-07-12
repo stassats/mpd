@@ -58,6 +58,7 @@
 	(error (format nil "The stream ~A is not opened." stream)))))
 
 (defun split-value (value)
+  "Split 'key: value' into (values key value)."
   (let ((column-position (position #\: value)))
     (values (subseq value 0 column-position)
 	    (subseq value (+ 2 column-position)))))
@@ -67,6 +68,12 @@
 	    (multiple-value-bind (key value) (split-value x)
 	      (list (to-keyword key) value)))
 	  values))
+
+(defun filter-keys (values)
+  (mapcar
+   (lambda (entry)
+     (nth-value 1 (split-value entry)))
+   values))
 
 (defun parse-track (data)
   (apply 'make-instance 'playlist (split-values data)))
@@ -107,7 +114,7 @@
     `(defun ,name (connection ,@parameters)
        ,@decl ,doc
        (macrolet ((send (&rest commands)
-		    `(send-command (format nil "~@{~A~^ ~}" 
+		    `(send-command (format nil "~@{~A~^ ~}"
 					   ,@(remove-if #'null commands))
 				   connection)))
 	 ,@forms))))
@@ -146,9 +153,7 @@
 
 (defcommand get-playlist ()
   "Return list of files in the current playlist."
-  (mapcar
-   (lambda (x) (nth-value 1 (split-value x)))
-   (send "playlist")))
+  (filter-keys (send "playlist")))
 
 (defcommand clear-playlist ()
   "Clear the current playlist."
@@ -177,8 +182,7 @@
 
 (defcommand playlist-info (&optional id)
   "Return content of the current playlist."
-  (parse-list
-   (send "playlistinfo" id)))
+  (parse-list (send "playlistinfo" id)))
 
 (defcommand delete-track (number)
   "Delete track from playlist."
@@ -206,16 +210,11 @@
 
 (defcommand commands ()
   "Return list of available commands."
-  (mapcar
-   (lambda (entry)
-     (nth-value 1 (split-value entry)))
-   (send "commands")))
+  (filter-keys (send "commands")))
 
 (defcommand not-commands ()
   "Return list of commands to which the current user does not have access."
-  (mapcar
-   (lambda (entry)
-     (nth-value 1 (split-value entry)))
+  (filter-keys
    (send "notcommands")))
 
 ;;; Database
@@ -232,13 +231,11 @@
   (send "listallinfo" path))
 
 (defcommand list-all (&optional path)
-  (parse-dirs
-   (send "listall" path)))
+  (parse-dirs (send "listall" path)))
 
 (defcommand ls-info (&optional path)
   "Show contents of directory."
-  (split-values
-   (send "lsinfo" path)))
+  (split-values (send "lsinfo" path)))
 
 (defcommand set-volume (value)
   "Set the volume to the value between 0-100."
@@ -247,14 +244,8 @@
 
 (defcommand tag-types ()
   "Get a list of available metadata types."
-  (mapcar
-   (lambda (entry)
-     (nth-value 1 (split-value entry)))
-   (send "tagtypes")))
+  (filter-keys (send "tagtypes")))
 
 (defcommand url-handlers ()
   "Get a list of available URL handlers."
-  (mapcar
-   (lambda (entry)
-     (nth-value 1 (split-value entry)))
-   (send "urlhandlers")))
+  (filter-keys (send "urlhandlers")))
