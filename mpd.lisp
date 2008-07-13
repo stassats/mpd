@@ -23,15 +23,17 @@
 (make-class playlist (track) (pos id))
 
 (defmethod print-object ((object track) stream)
-  (print-unreadable-object (object stream :type t)
+  (print-unreadable-object (object stream :type t :identity t)
     (with-slots (artist title album) object
       (format stream "~A - ~A (~A)" artist title album))))
 
-(defun connect (&key (host *defualt-host*) (port *default-port*))
+(defun connect (&key (host *defualt-host*) (port *default-port*)
+		password)
   "Connect to MPD."
   (let ((connection (socket-connect host port)))
-    (values connection
-	    (read-answer (socket-stream connection)))))
+    (prog1 (values connection
+		   (read-answer (socket-stream connection)))
+      (when password (password connection password)))))
 
 (defun read-answer (stream)
   (loop
@@ -57,56 +59,45 @@
 	  (read-answer stream))
 	(error (format nil "The stream ~A is not opened." stream)))))
 
-(defun split-value (value)
-  "Split 'key: value' into (values key value)."
-  (let ((column-position (position #\: value)))
-    (values (subseq value 0 column-position)
-	    (subseq value (+ 2 column-position)))))
+(defun split-value (string)
+  "Split a string 'key: value' into (list :key value)."
+  (let ((column-position (position #\: string)))
+    (list (to-keyword (subseq string 0 column-position))
+	  (subseq string (+ 2 column-position)))))
 
-(defun split-values (values)
-  (mapcan (lambda (x)
-	    (multiple-value-bind (key value) (split-value x)
-	      (list (to-keyword key) value)))
-	  values))
+(defun split-values (strings)
+  "Transform the list of strings 'key: value' into the plist."
+  (mapcan #'split-value strings))
 
-(defun filter-keys (values)
-  (mapcar
-   (lambda (entry)
-     (nth-value 1 (split-value entry)))
-   values))
+(defun filter-keys (strings)
+  "Transform the list of strings 'key: value' into the list of values."
+  (mapcar (lambda (entry)
+	    (subseq entry (+ 2 (position #\: entry))))
+	  strings))
 
 (defun parse-track (data)
+  "Make a new instance of the class playlist with initargs from
+   the list of strings 'key: value'."
   (apply 'make-instance 'playlist (split-values data)))
 
 (defun parse-list (list)
+  "Make a list of new instances of the class playlist with initargs from
+   a list of strings 'key: value'. Each track is separeted by the `file' key."
   (let (track)
     (mapcan (lambda (x)
-	      (multiple-value-bind (key value) (split-value x)
-		(setf key (to-keyword key))
-		(if (and track (eq key :file))
+	      (let ((pair (split-value x)))
+		(if (and track (eq :file (car pair)))
 		    (prog1
 			(list (apply 'make-instance 'playlist track))
-		      (setf track
-			    (list key value)))
-		    (progn
-		      (push value track)
-		      (push key track)
-		      nil))))
+		      (setf track pair))
+		    (progn (setf track (nconc track pair))
+			   nil))))
 	    list)))
 
 (defun parse-dirs (list)
   (let (track)
     (mapcan (lambda (x)
-	      (multiple-value-bind (key value) (split-value x)
-                (setf key (to-keyword key))
-                (if (and track (eq key :directory))
-		    (prog1
-			(list track)
-		      (setf track
-			    (list value)))
-		    (progn
-		      (push value track)
-		      nil))))
+	      )
 	    list)))
 
 (defmacro defcommand (name parameters &body body)
@@ -114,10 +105,14 @@
     `(defun ,name (connection ,@parameters)
        ,@decl ,doc
        (macrolet ((send (&rest commands)
-		    `(send-command (format nil "~@{~A~^ ~}"
-					   ,@(remove-if #'null commands))
+		    `(send-command (format nil "~{~A~^ ~}"
+					   (remove-if #'null (list ,@commands)))
 				   connection)))
 	 ,@forms))))
+
+(defcommand password (password)
+  "Authentication."
+  (send "password" password))
 
 (defcommand disconnect ()
   "Close connection."
@@ -182,7 +177,9 @@
 
 (defcommand playlist-info (&optional id)
   "Return content of the current playlist."
-  (parse-list (send "playlistinfo" id)))
+  (if id
+      (parse-track (send "playlistinfo" id))
+      (parse-list (send "playlistinfo"))))
 
 (defcommand delete-track (number)
   "Delete track from playlist."

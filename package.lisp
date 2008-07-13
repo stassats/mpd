@@ -9,6 +9,7 @@
    :*default-port*
    :connect
    :disconnect
+   :password
    :with-mpd
 
    :ping
