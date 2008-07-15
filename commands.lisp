@@ -19,68 +19,11 @@
   "Return instance of playlist with current song."
   (parse-track (send "currentsong")))
 
-;;; Control
+(defcommand disable-output (id)
+  (send "disableoutput" id))
 
-(defcommand pause ()
-  "Toggle pause / resume playing."
-  (send "pause"))
-
-(defcommand play (&optional song-number)
-  "Begin playing the playlist starting from song-number, default is 0."
-  (send "play" song-number))
-
-(defcommand stop ()
-  "Stop playing."
-  (send "stop"))
-
-(defcommand next ()
-  "Play next track in the playlist."
-  (send "next"))
-
-(defcommand previous ()
-  "Play previous track in the playlist."
-  (send "previous"))
-
-;; Playlist
-
-(defcommand get-playlist ()
-  "Return list of files in the current playlist."
-  (filter-keys (send "playlist")))
-
-(defcommand clear-playlist ()
-  "Clear the current playlist."
-  (send "clear"))
-
-(defgeneric add (connection what)
-  (:documentation "Add file or directory to the current playlist."))
-
-(defmethod add (connection (what track))
-  (add (track-file what) connection))
-
-(defmethod add (connection (what string))
-  (send-command (format nil "add ~a" what) connection))
-
-(defcommand save-playlist (filename)
-  "Save the current playlist to the file in the playlist directory."
-  (send "save" filename))
-
-(defcommand load-playlist (filename)
-  "Load playlist from file."
-  (send "load" filename))
-
-(defcommand rename-playlist (name new-name)
-  "Rename playlist."
-  (send "rename" name new-name))
-
-(defcommand playlist-info (&optional id)
-  "Return content of the current playlist."
-  (if id
-      (parse-track (send "playlistinfo" id))
-      (parse-list (send "playlistinfo") 'playlist)))
-
-(defcommand delete-track (number)
-  "Delete track from playlist."
-  (send "delete" number))
+(defcommand enable-output (id)
+  (send "enableoutput" id))
 
 (defcommand ping ()
   "Send ping to MPD."
@@ -111,6 +54,100 @@
   (filter-keys
    (send "notcommands")))
 
+;;; Control
+
+(defcommand pause ()
+  "Toggle pause / resume playing."
+  (send "pause"))
+
+(defcommand play (&optional song-number)
+  "Begin playing the playlist starting from song-number, default is 0."
+  (send "play" song-number))
+
+(defcommand stop ()
+  "Stop playing."
+  (send "stop"))
+
+(defcommand next ()
+  "Play next track in the playlist."
+  (send "next"))
+
+(defcommand previous ()
+  "Play previous track in the playlist."
+  (send "previous"))
+
+;; Playlist
+
+(defcommand playlist ()
+  "Return list of files in the current playlist."
+  (filter-keys (send "playlist")))
+
+(defcommand clear-playlist ()
+  "Clear the current playlist."
+  (send "clear"))
+
+(defcommand save-playlist (filename)
+  "Save the current playlist to the file in the playlist directory."
+  (send "save" filename))
+
+(defcommand load-playlist (filename)
+  "Load playlist from file."
+  (send "load" filename))
+
+(defcommand rename-playlist (name new-name)
+  "Rename playlist."
+  (send "rename" name new-name))
+
+(defcommand playlist-info (&optional id)
+  "Return content of the current playlist."
+  (if id
+      (parse-track (send "playlistinfo" id))
+      (parse-list (send "playlistinfo") 'playlist)))
+
+(defgeneric add (connection what)
+  (:documentation "Add file or directory to the current playlist."))
+
+(defmethod-command add ((what track))
+  (add connection (track-file what)))
+
+(defmethod-command add ((what string))
+  (send "add" what))
+
+(defgeneric add-id (connection what)
+  (:documentation "Like add, but returns a playlist-id."))
+
+(defmethod-command add-id ((what track))
+  (add connection (track-file what)))
+
+(defmethod-command add-id ((what string))
+  (car (filter-keys (send "addid" what))))
+
+(defcommand move (from to)
+  "Move track from `from' to `to' in the playlist."
+  (send "move" from to))
+
+(defgeneric move-id (connection id to)
+  (:documentation "Move track with `id' to `to' in the playlist."))
+
+(defmethod-command move-id ((track playlist) to)
+  (move-id connection (playlist-id track) to))
+
+(defmethod-command move-id ((id number) to)
+  (send "moveid" id to))
+
+(defcommand delete-track (number)
+  "Delete track from playlist."
+  (send "delete" number))
+
+(defgeneric delete-id (connection id)
+  (:documentation "Delete track with `id' from playlist."))
+
+(defmethod-command delete-id ((id playlist))
+  (delete-id connection (playlist-id id)))
+
+(defmethod-command delete-id ((id number))
+  (send "deleteid" id))
+
 ;;; Database
 
 (defcommand update (&optional path)
@@ -119,17 +156,34 @@
 
 (defcommand mpd-find (type what)
   "Find tracks in the database with a case sensitive, exact match."
-  (send "find" type what))
+  (parse-list (send "find" type what) 'track))
+
+(defcommand mpd-list (metadata-1 &optional metadata-2 search-term)
+  "List all metadata of `metadata-1'.
+If `metadata-2' & `search-term' are supplied,
+then list all `metadata-1' in which `metadata-2' has value `search-term'."
+  (send "list" metadata-1 metadata-2 search-term))
+
+(defcommand mpd-search (type what)
+  "Find tracks in the database with a case sensitive, inexact match."
+  (parse-list (send "search" type what) 'track))
 
 (defcommand list-all-info (&optional path)
+  "Lists all information about files in `path' recursively. Default path is /."
   (parse-list (send "listallinfo" path) 'track))
 
 (defcommand list-all (&optional path)
+  "Lists all files in `path' recursively. Default path is /."
   (parse-list (send "listall" path)))
 
 (defcommand list-info (&optional path)
   "Show contents of directory."
   (parse-list (send "lsinfo" path) 'track))
+
+(defcommand mpd-count (scope query)
+  "Number of songs and their total playtime matchin `query'.
+Return: (number playtime)."
+  (filter-keys (send "count" scope query)))
 
 (defcommand set-volume (value)
   "Set the volume to the value between 0-100."

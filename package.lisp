@@ -11,6 +11,9 @@
    :disconnect
    :password
    :with-mpd
+   :disable-output
+   :enableoutput
+   :outputs
 
    :ping
    :kill
@@ -23,22 +26,30 @@
    :next
 
    :now-playing
-   :get-playlist
+   :playlist
    :add
+   :add-id
+   :move
+   :move-id
    :clear-playlist
    :delete-track
+   :delete-id
    :save-playlist
    :load-plalist
    :rename-playlist
    :update
    :playlist-info
-   :outputs
    :set-volume
    :tag-types
+   :url-handlers
    :list-all
    :list-info
    :list-all-info
-
+   :commands
+   :not-commands
+   :mpd-find
+   :mpd-list
+   :mpd-search
    :track-file
    :track-title
    :track-artist

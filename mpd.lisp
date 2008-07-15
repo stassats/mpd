@@ -103,12 +103,19 @@
 	       list)
        (when track (make-track))))))
 
+(defmacro send (&rest commands)
+  `(send-command (format nil "~{~A~^ ~}"
+			 (remove-if #'null (list ,@commands)))
+		 connection))
+
 (defmacro defcommand (name parameters &body body)
   (multiple-value-bind (forms decl doc) (parse-body body :documentation t)
     `(defun ,name (connection ,@parameters)
        ,@decl ,doc
-       (macrolet ((send (&rest commands)
-		    `(send-command (format nil "~{~A~^ ~}"
-					   (remove-if #'null (list ,@commands)))
-				   connection)))
-	 ,@forms))))
+       ,@forms)))
+
+(defmacro defmethod-command (name parameters &body body)
+  (multiple-value-bind (forms decl) (parse-body body)
+    `(defmethod ,name (connection ,@parameters)
+       ,@decl
+       ,@forms)))
