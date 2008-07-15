@@ -80,25 +80,28 @@
    the list of strings 'key: value'."
   (apply 'make-instance 'playlist (split-values data)))
 
-(defun parse-list (list)
-  "Make a list of new instances of the class playlist with initargs from
+(defun parse-list (list &optional class)
+  "Make a list of new instances of the class `class' with initargs from
    a list of strings 'key: value'. Each track is separeted by the `file' key."
   (let (track)
-    (mapcan (lambda (x)
-	      (let ((pair (split-value x)))
-		(if (and track (eq :file (car pair)))
-		    (prog1
-			(list (apply 'make-instance 'playlist track))
-		      (setf track pair))
-		    (progn (setf track (nconc track pair))
-			   nil))))
-	    list)))
-
-(defun parse-dirs (list)
-  (let (track)
-    (mapcan (lambda (x)
-	      )
-	    list)))
+    (labels ((make-track ()
+	       (list
+		(if class
+		    (apply 'make-instance class track)
+		    track))))
+      (nconc
+       (mapcan (lambda (x)
+		 (let* ((pair (split-value x))
+			(key (car pair)))
+		   (cond ((and track (eq key :file))
+			  (prog1 (make-track)
+			    (setf track pair)))
+			 ((or (eq key :directory) (eq key :playlist))
+			  (list pair))
+			 (t (setf track (nconc track pair))
+			    nil))))
+	       list)
+       (when track (make-track))))))
 
 (defmacro defcommand (name parameters &body body)
   (multiple-value-bind (forms decl doc) (parse-body body :documentation t)
@@ -109,6 +112,8 @@
 					   (remove-if #'null (list ,@commands)))
 				   connection)))
 	 ,@forms))))
+
+;;;; Commands
 
 (defcommand password (password)
   "Authentication."
@@ -179,7 +184,7 @@
   "Return content of the current playlist."
   (if id
       (parse-track (send "playlistinfo" id))
-      (parse-list (send "playlistinfo"))))
+      (parse-list (send "playlistinfo") 'playlist)))
 
 (defcommand delete-track (number)
   "Delete track from playlist."
@@ -225,14 +230,14 @@
   (send "find" type what))
 
 (defcommand list-all-info (&optional path)
-  (send "listallinfo" path))
+  (parse-list (send "listallinfo" path) 'track))
 
 (defcommand list-all (&optional path)
-  (parse-dirs (send "listall" path)))
+  (parse-list (send "listall" path)))
 
-(defcommand ls-info (&optional path)
+(defcommand list-info (&optional path)
   "Show contents of directory."
-  (split-values (send "lsinfo" path)))
+  (parse-list (send "lsinfo" path) 'track))
 
 (defcommand set-volume (value)
   "Set the volume to the value between 0-100."
