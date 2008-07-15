@@ -36,7 +36,8 @@
    :set-volume
    :tag-types
    :list-all
-   :ls-info
+   :list-info
+   :list-all-info
 
    :track-file
    :track-title
