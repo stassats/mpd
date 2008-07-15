@@ -11,4 +11,5 @@
   :serial t
   :depends-on (:usocket :alexandria)
   :components ((:file "package")
-	       (:file "mpd")))
+	       (:file "mpd")
+	       (:file "commands")))
