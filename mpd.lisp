@@ -8,25 +8,6 @@
 (defvar *defualt-host* "localhost")
 (defvar *default-port* 6600)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun to-keyword (x)
-    "Coerce a string, a symbol, or a character to a keyword"
-    (intern (string-upcase (string x)) :keyword)))
-
-(defmacro make-class (name superclasses slots)
-  `(defclass ,name ,superclasses
-     ,(loop for i in slots
-	 collect `(,i :initform nil :initarg ,(to-keyword i)
-		      :accessor ,(intern (format nil "~A-~A" name i))))))
-
-(make-class track () (file title artist album genre date track time))
-(make-class playlist (track) (pos id))
-
-(defmethod print-object ((object track) stream)
-  (print-unreadable-object (object stream :type t :identity t)
-    (with-slots (artist title album) object
-      (format stream "~A - ~A (~A)" artist title album))))
-
 (defun connect (&key (host *defualt-host*) (port *default-port*)
 		password)
   "Connect to MPD."
@@ -40,8 +21,16 @@
      for line = (read-line stream nil)
      until (string= line "OK" :end1 2)
      if (string= line "ACK" :end1 3) do
-     (error (subseq line 4))
+     (handle-error (subseq line 4))
      collect line))
+
+(defun handle-error (text)
+  (let* ((error-id (parse-integer text :start 1 :junk-allowed t))
+	 (delimiter (position #\] text))
+	 (condition (cdr (assoc error-id +error-ids-alist+))))
+    (if (and delimiter condition)
+	(error condition :text (subseq text (+ delimiter 2)))
+	(error 'protocol-mismatch))))
 
 (defmacro with-mpd ((var &rest options) &body body)
   `(let ((,var (connect ,@options)))
@@ -62,7 +51,8 @@
 (defun split-value (string)
   "Split a string 'key: value' into (list :key value)."
   (let ((column-position (position #\: string)))
-    (list (to-keyword (subseq string 0 column-position))
+    (list (make-keyword
+	   (string-upcase (subseq string 0 column-position)))
 	  (subseq string (+ 2 column-position)))))
 
 (defun split-values (strings)
@@ -75,16 +65,19 @@
 	    (subseq entry (+ 2 (position #\: entry))))
 	  strings))
 
-(defun parse-track (data)
+;;; C.f. performance:
+;; (apply (lambda (&key foo bar) (make-instance
+;; 	    'zot :quux 42 :foo foo :bar bar)) list)
+(defun make-track (data type)
   "Make a new instance of the class playlist with initargs from
    the list of strings 'key: value'."
-  (apply 'make-instance 'playlist (split-values data)))
+  (apply 'make-instance type (split-values data)))
 
 (defun parse-list (list &optional class)
   "Make a list of new instances of the class `class' with initargs from
    a list of strings 'key: value'. Each track is separeted by the `file' key."
   (let (track)
-    (labels ((make-track ()
+    (labels ((create-track ()
 	       (list
 		(if class
 		    (apply 'make-instance class track)
@@ -94,15 +87,16 @@
 		 (let* ((pair (split-value x))
 			(key (car pair)))
 		   (cond ((and track (eq key :file))
-			  (prog1 (make-track)
+			  (prog1 (create-track)
 			    (setf track pair)))
 			 ((or (eq key :directory) (eq key :playlist))
 			  (list pair))
 			 (t (setf track (nconc track pair))
 			    nil))))
 	       list)
-       (when track (make-track))))))
+       (when track (create-track))))))
 
+;;; think about formatter
 (defmacro send (&rest commands)
   `(send-command (format nil "~{~A~^ ~}"
 			 (remove-if #'null (list ,@commands)))

@@ -26,7 +26,6 @@
    :next
 
    :now-playing
-   :playlist
    :add
    :add-id
    :move
@@ -50,14 +49,27 @@
    :mpd-find
    :mpd-list
    :mpd-search
-   :track-file
-   :track-title
-   :track-artist
-   :track-album
-   :track-date
-   :track-track
-   :track-time
-   :track-genre
 
-   :playlist-pos
-   :playlist-id))
+   :track
+   :file
+   :title
+   :artist
+   :album
+   :date
+   :duration
+   :genre
+   :composer
+   
+   :playlist
+   :position-in-playlist
+   :id
+
+   :mpd-error
+   :bad-argument
+   :incorrect-password
+   :not-permitted
+   :unknown-command
+   :not-exist
+   :playlist-size-exceed
+   :already-updating
+   :exist))

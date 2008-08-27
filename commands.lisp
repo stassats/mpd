@@ -17,7 +17,7 @@
 
 (defcommand now-playing ()
   "Return instance of playlist with current song."
-  (parse-track (send "currentsong")))
+  (make-track (send "currentsong") 'playlist))
 
 (defcommand disable-output (id)
   (send "disableoutput" id))
@@ -101,23 +101,23 @@
 (defcommand playlist-info (&optional id)
   "Return content of the current playlist."
   (if id
-      (parse-track (send "playlistinfo" id))
+      (make-track (send "playlistinfo" id) 'playlist)
       (parse-list (send "playlistinfo") 'playlist)))
 
 (defgeneric add (connection what)
   (:documentation "Add file or directory to the current playlist."))
 
 (defmethod-command add ((what track))
-  (add connection (track-file what)))
+  (add connection (file what)))
 
 (defmethod-command add ((what string))
   (send "add" what))
 
 (defgeneric add-id (connection what)
-  (:documentation "Like add, but returns a playlist-id."))
+  (:documentation "Like add, but returns a id."))
 
 (defmethod-command add-id ((what track))
-  (add connection (track-file what)))
+  (add connection (file what)))
 
 (defmethod-command add-id ((what string))
   (car (filter-keys (send "addid" what))))
@@ -130,7 +130,7 @@
   (:documentation "Move track with `id' to `to' in the playlist."))
 
 (defmethod-command move-id ((track playlist) to)
-  (move-id connection (playlist-id track) to))
+  (move-id connection (id track) to))
 
 (defmethod-command move-id ((id number) to)
   (send "moveid" id to))
@@ -143,7 +143,7 @@
   (:documentation "Delete track with `id' from playlist."))
 
 (defmethod-command delete-id ((id playlist))
-  (delete-id connection (playlist-id id)))
+  (delete-id connection (id id)))
 
 (defmethod-command delete-id ((id number))
   (send "deleteid" id))
@@ -187,7 +187,7 @@ Return: (number playtime)."
 
 (defcommand set-volume (value)
   "Set the volume to the value between 0-100."
-  (declare ((integer 0 100) value))
+  (declare (type (integer 0 100) value))
   (send "setvol" value))
 
 (defcommand tag-types ()

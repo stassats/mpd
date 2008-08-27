@@ -1,4 +1,4 @@
-;; -*- Mode: Lisp; Syntax: ANSI-Common-Lisp; Base: 10 -*-
+;;; -*- Mode: Lisp; Syntax: ANSI-Common-Lisp; Base: 10 -*-
 
 (defpackage #:mpd-asd
   (:use :cl :asdf))
@@ -11,5 +11,6 @@
   :serial t
   :depends-on (:usocket :alexandria)
   :components ((:file "package")
+	       (:file "classes")
 	       (:file "mpd")
 	       (:file "commands")))
