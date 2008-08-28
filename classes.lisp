@@ -38,7 +38,7 @@
 (define-condition exist (mpd-error)
   ())
 
-(defvar *error-ids-alist*
+(define-constant +error-ids-alist+
   '((2 . bad-argument)
     (3 . incorrect-password)
     (4 . not-permitted)
@@ -46,7 +46,8 @@
     (50 . not-exist)
     (51 . playlist-size-exceed)
     (54 . already-updating)
-    (56 . exist)))
+    (56 . exist))
+  :test #'equal)
 
 (defclass track ()
   ((file
@@ -72,9 +73,10 @@
    (time
     :initform nil :initarg :time :accessor duration)))
 
-(defvar *tags*
+(define-constant +tags+
   '(artist album title track name genre date
-    composer performer comment disc filename any))
+    composer performer comment disc filename any)
+  :test #'equal)
 
 (defclass playlist (track)
   ((pos

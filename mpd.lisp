@@ -27,7 +27,7 @@
 (defun handle-error (text)
   (let* ((error-id (parse-integer text :start 1 :junk-allowed t))
 	 (delimiter (position #\] text))
-	 (condition (cdr (assoc error-id *error-ids-alist*))))
+	 (condition (cdr (assoc error-id +error-ids-alist+))))
     (if (and delimiter condition)
 	(error condition :text (subseq text (+ delimiter 2)))
 	(error 'protocol-mismatch))))
