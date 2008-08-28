@@ -27,7 +27,7 @@
 (defun handle-error (text)
   (let* ((error-id (parse-integer text :start 1 :junk-allowed t))
 	 (delimiter (position #\] text))
-	 (condition (cdr (assoc error-id +error-ids-alist+))))
+	 (condition (cdr (assoc error-id *error-ids-alist*))))
     (if (and delimiter condition)
 	(error condition :text (subseq text (+ delimiter 2)))
 	(error 'protocol-mismatch))))
@@ -46,11 +46,13 @@
 	  (write-line command stream)
 	  (force-output stream)
 	  (read-answer stream))
-	(error (format nil "The stream ~A is not opened." stream)))))
+	(error 'mpd-error :text (format nil "The stream ~A is not opened." stream)))))
 
 (defun split-value (string)
   "Split a string 'key: value' into (list :key value)."
   (let ((column-position (position #\: string)))
+    (unless column-position
+      (error 'protocol-mismatch))
     (list (make-keyword
 	   (string-upcase (subseq string 0 column-position)))
 	  (subseq string (+ 2 column-position)))))
@@ -62,7 +64,10 @@
 (defun filter-keys (strings)
   "Transform the list of strings 'key: value' into the list of values."
   (mapcar (lambda (entry)
-	    (subseq entry (+ 2 (position #\: entry))))
+	    (let ((column-position (position #\: entry)))
+	      (unless column-position
+		(error 'protocol-mismatch))
+	      (subseq entry (+ 2 column-position))))
 	  strings))
 
 ;;; C.f. performance:
@@ -113,3 +118,11 @@
     `(defmethod ,name (connection ,@parameters)
        ,@decl
        ,@forms)))
+
+(defun process-string (string)
+  (setf string
+	(string-trim '(#\Space #\Tab #\Newline) string))
+  (assert (> (length string) 0))
+  (if (position #\Space string)
+      (format nil "\"~a\"" string)
+      string))

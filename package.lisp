@@ -65,6 +65,7 @@
    :id
 
    :mpd-error
+   :protocol-mismatch
    :bad-argument
    :incorrect-password
    :not-permitted

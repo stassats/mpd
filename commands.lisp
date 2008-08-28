@@ -61,6 +61,7 @@
   (send "pause"))
 
 (defcommand play (&optional song-number)
+  (check-type song-number (or integer null) "an integer")
   "Begin playing the playlist starting from song-number, default is 0."
   (send "play" song-number))
 
@@ -96,10 +97,12 @@
 
 (defcommand rename-playlist (name new-name)
   "Rename playlist."
-  (send "rename" name new-name))
+  (unless (equal name new-name)
+    (send "rename" name new-name)))
 
 (defcommand playlist-info (&optional id)
   "Return content of the current playlist."
+  (check-type id (or integer null) "an integer")
   (if id
       (make-track (send "playlistinfo" id) 'playlist)
       (parse-list (send "playlistinfo") 'playlist)))
@@ -124,19 +127,22 @@
 
 (defcommand move (from to)
   "Move track from `from' to `to' in the playlist."
+  (check-type from (or integer null) "an integer")
+  (check-type to (or integer null) "an integer")
   (send "move" from to))
 
 (defgeneric move-id (connection id to)
   (:documentation "Move track with `id' to `to' in the playlist."))
 
-(defmethod-command move-id ((track playlist) to)
+(defmethod-command move-id ((track playlist) (to integer))
   (move-id connection (id track) to))
 
-(defmethod-command move-id ((id number) to)
+(defmethod-command move-id ((id integer) (to integer))
   (send "moveid" id to))
 
 (defcommand delete-track (number)
   "Delete track from playlist."
+  (check-type number integer "an integer")
   (send "delete" number))
 
 (defgeneric delete-id (connection id)
@@ -145,7 +151,7 @@
 (defmethod-command delete-id ((id playlist))
   (delete-id connection (id id)))
 
-(defmethod-command delete-id ((id number))
+(defmethod-command delete-id ((id integer))
   (send "deleteid" id))
 
 ;;; Database
@@ -156,7 +162,9 @@
 
 (defcommand mpd-find (type what)
   "Find tracks in the database with a case sensitive, exact match."
-  (parse-list (send "find" type what) 'track))
+  (assert (member type *tags*))
+  (parse-list (send "find" type (process-string what))
+	      'track))
 
 (defcommand mpd-list (metadata-1 &optional metadata-2 search-term)
   "List all metadata of `metadata-1'.
@@ -166,6 +174,7 @@ then list all `metadata-1' in which `metadata-2' has value `search-term'."
 
 (defcommand mpd-search (type what)
   "Find tracks in the database with a case sensitive, inexact match."
+  (assert (member type *tags*))
   (parse-list (send "search" type what) 'track))
 
 (defcommand list-all-info (&optional path)
@@ -181,13 +190,13 @@ then list all `metadata-1' in which `metadata-2' has value `search-term'."
   (parse-list (send "lsinfo" path) 'track))
 
 (defcommand mpd-count (scope query)
-  "Number of songs and their total playtime matchin `query'.
+  "Number of songs and their total playtime matching `query'.
 Return: (number playtime)."
   (filter-keys (send "count" scope query)))
 
 (defcommand set-volume (value)
   "Set the volume to the value between 0-100."
-  (declare (type (integer 0 100) value))
+  (check-type value (integer 0 100) "an integer in range 0-100")
   (send "setvol" value))
 
 (defcommand tag-types ()

@@ -38,7 +38,7 @@
 (define-condition exist (mpd-error)
   ())
 
-(defconstant +error-ids-alist+
+(defvar *error-ids-alist*
   '((2 . bad-argument)
     (3 . incorrect-password)
     (4 . not-permitted)
@@ -72,6 +72,10 @@
    (time
     :initform nil :initarg :time :accessor duration)))
 
+(defvar *tags*
+  '(artist album title track name genre date
+    composer performer comment disc filename any))
+
 (defclass playlist (track)
   ((pos
     :initform nil :initarg :pos :accessor position-in-playlist)
@@ -92,4 +96,3 @@
   (print-unreadable-object (object stream :type t :identity t)
     (with-slots (artist title album) object
       (format stream "~A - ~A (~A)" artist title album))))
-
