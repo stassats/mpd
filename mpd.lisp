@@ -59,7 +59,16 @@
 
 (defun split-values (strings)
   "Transform the list of strings 'key: value' into the plist."
-  (mapcan #'split-value strings))
+  (process-values
+   (mapcan #'split-value strings)))
+
+(defun process-values (values)
+  "Convert strings to integers where needed."
+  (loop
+     for (key value) on values by #'cddr
+     if (member key +integer-keys+) nconc
+     (list key (parse-integer value))
+     else nconc (list key value)))
 
 (defun filter-keys (strings)
   "Transform the list of strings 'key: value' into the list of values."
@@ -120,9 +129,10 @@
        ,@forms)))
 
 (defun process-string (string)
-  (setf string
-	(string-trim '(#\Space #\Tab #\Newline) string))
-  (assert (> (length string) 0))
-  (if (position #\Space string)
-      (format nil "\"~a\"" string)
-      string))
+  (let ((string
+	 (string-trim '(#\Space #\Tab #\Newline) string)))
+    (assert (> (length string) 0))
+    (if (position #\Space string)
+	(format nil "~s" string)
+	string)))
+

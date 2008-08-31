@@ -49,6 +49,12 @@
     (56 . exist))
   :test #'equal)
 
+(define-constant +tag-types+
+  '(artist album title track name genre date
+    composer performer comment disc filename any)
+  :test #'equal
+  :documentation "Types of tags for using in `search' and `find'")
+
 (defclass track ()
   ((file
     :initform nil :initarg :file :accessor file)
@@ -71,18 +77,21 @@
    (track
     :initform nil :initarg :track :accessor track-number)
    (time
-    :initform nil :initarg :time :accessor duration)))
-
-(define-constant +tags+
-  '(artist album title track name genre date
-    composer performer comment disc filename any)
-  :test #'equal)
+    :initform nil :initarg :time :accessor duration
+    :type integer)))
 
 (defclass playlist (track)
   ((pos
-    :initform nil :initarg :pos :accessor position-in-playlist)
+    :initform nil :initarg :pos :accessor position-in-playlist
+    :type integer)
    (id
-    :initform nil :initarg :id :accessor id)))
+    :initform nil :initarg :id :accessor id
+    :type integer)))
+
+(define-constant +integer-keys+
+    '(:time :id :pos)
+  :test #'equal
+  :documentation "List of keys which values must be integers.")
 
 (defclass status ()
   ((artists         :accessor get-artists         :initarg :artists)

@@ -17,7 +17,9 @@
 
 (defcommand now-playing ()
   "Return instance of playlist with current song."
-  (make-track (send "currentsong") 'playlist))
+  (let ((track (send "currentsong")))
+    (when track
+      (make-track track 'playlist))))
 
 (defcommand disable-output (id)
   (send "disableoutput" id))
@@ -162,7 +164,7 @@
 
 (defcommand mpd-find (type what)
   "Find tracks in the database with a case sensitive, exact match."
-  (assert (member type +tags+))
+  (assert (member type +tag-types+))
   (parse-list (send "find" type (process-string what))
 	      'track))
 
@@ -174,7 +176,7 @@ then list all `metadata-1' in which `metadata-2' has value `search-term'."
 
 (defcommand mpd-search (type what)
   "Find tracks in the database with a case sensitive, inexact match."
-  (assert (member type +tags+))
+  (assert (member type +tag-types+))
   (parse-list (send "search" type what) 'track))
 
 (defcommand list-all-info (&optional path)
