@@ -19,13 +19,15 @@
    :kill
    :status
 
+   :now-playing
    :pause
    :play
    :stop
    :previous
    :next
+   :set-volume
 
-   :now-playing
+
    :add
    :add-id
    :move
@@ -36,14 +38,18 @@
    :save-playlist
    :load-plalist
    :rename-playlist
-   :update
    :playlist-info
-   :set-volume
+   :shuffle
+   :list-playlist
+   :list-playlist-info
+
+   :update
    :tag-types
    :url-handlers
    :list-all
    :list-info
    :list-all-info
+
    :commands
    :not-commands
    :mpd-find
@@ -59,7 +65,7 @@
    :duration
    :genre
    :composer
-   
+
    :playlist
    :position-in-playlist
    :id

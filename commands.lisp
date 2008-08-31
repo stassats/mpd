@@ -81,6 +81,16 @@
 
 ;; Playlist
 
+(defcommand list-playlist (name)
+  "List files in the playlist `name'"
+  (filter-keys (send "listplaylist"
+		     (process-string name))))
+
+(defcommand list-playlist-info (name)
+  "List metadata of tracks in the playlist `name'"
+  (parse-list (send "listplaylistinfo" (process-string name))
+	      'playlist))
+
 (defcommand playlist ()
   "Return list of files in the current playlist."
   (filter-keys (send "playlist")))
@@ -156,6 +166,10 @@
 (defmethod-command delete-id ((id integer))
   (send "deleteid" id))
 
+(defcommand shuffle ()
+  "Shuffle the current playlist."
+  (send "shuffle"))
+
 ;;; Database
 
 (defcommand update (&optional path)
@@ -185,7 +199,7 @@ then list all `metadata-1' in which `metadata-2' has value `search-term'."
 
 (defcommand list-all (&optional path)
   "Lists all files in `path' recursively. Default path is /."
-  (parse-list (send "listall" path)))
+  (filter-keys (send "listall" path)))
 
 (defcommand list-info (&optional path)
   "Show contents of directory."
