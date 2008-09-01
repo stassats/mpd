@@ -27,11 +27,12 @@
    :next
    :set-volume
 
-
    :add
    :add-id
    :move
    :move-id
+   :swap
+   :swap-id
    :clear-playlist
    :delete-track
    :delete-id

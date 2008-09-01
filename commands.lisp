@@ -139,9 +139,10 @@
 
 (defcommand move (from to)
   "Move track from `from' to `to' in the playlist."
-  (check-type from (or integer null) "an integer")
-  (check-type to (or integer null) "an integer")
-  (send "move" from to))
+  (check-type from integer "an integer")
+  (check-type to integer "an integer")
+  (unless (= from to)
+   (send "move" from to)))
 
 (defgeneric move-id (connection id to)
   (:documentation "Move track with `id' to `to' in the playlist."))
@@ -151,6 +152,22 @@
 
 (defmethod-command move-id ((id integer) (to integer))
   (send "moveid" id to))
+
+(defcommand swap (first second)
+  "Swap positions of two tracks."
+  (check-type first integer "an integer")
+  (check-type second integer "an integer")
+  (unless (= first second)
+   (send "swap" first second)))
+
+(defgeneric swap-id (connection first second)
+  (:documentation "Swap positions of two tracks by id."))
+
+(defmethod-command swap-id ((first playlist) (second playlist))
+  (swap-id connection (id first) (id second)))
+
+(defmethod-command swap-id ((first integer) (second integer))
+  (send "swap" first second))
 
 (defcommand delete-track (number)
   "Delete track from playlist."

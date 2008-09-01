@@ -11,9 +11,6 @@
   (:report (lambda (condition stream)
 	     (princ (text condition) stream))))
 
-(define-condition protocol-mismatch (mpd-error)
-  ())
-
 (define-condition unknown-command (mpd-error)
   ())
 

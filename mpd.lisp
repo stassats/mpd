@@ -28,9 +28,7 @@
   (let* ((error-id (parse-integer text :start 1 :junk-allowed t))
 	 (delimiter (position #\] text))
 	 (condition (cdr (assoc error-id +error-ids-alist+))))
-    (if (and delimiter condition)
-	(error condition :text (subseq text (+ delimiter 2)))
-	(error 'protocol-mismatch))))
+    (error condition :text (subseq text (+ delimiter 2)))))
 
 (defmacro with-mpd ((var &rest options) &body body)
   `(let ((,var (connect ,@options)))
@@ -50,33 +48,23 @@
 
 (defun split-value (string)
   "Split a string 'key: value' into (list :key value)."
-  (let ((column-position (position #\: string)))
-    (unless column-position
-      (error 'protocol-mismatch))
-    (list (make-keyword
-	   (string-upcase (subseq string 0 column-position)))
-	  (subseq string (+ 2 column-position)))))
+  (let* ((column-position (position #\: string))
+	 (keyword (make-keyword
+		   (string-upcase (subseq string 0 column-position))))
+	 (value (subseq string (+ 2 column-position))))
+    (list keyword
+	  (if (member keyword +integer-keys+)
+	      (parse-integer value)
+	      value))))
 
 (defun split-values (strings)
   "Transform the list of strings 'key: value' into the plist."
-  (process-values
-   (mapcan #'split-value strings)))
-
-(defun process-values (values)
-  "Convert strings to integers where needed."
-  (loop
-     for (key value) on values by #'cddr
-     if (member key +integer-keys+) nconc
-     (list key (parse-integer value))
-     else nconc (list key value)))
+  (mapcan #'split-value strings))
 
 (defun filter-keys (strings)
   "Transform the list of strings 'key: value' into the list of values."
   (mapcar (lambda (entry)
-	    (let ((column-position (position #\: entry)))
-	      (unless column-position
-		(error 'protocol-mismatch))
-	      (subseq entry (+ 2 column-position))))
+	    (subseq entry (+ 2 (position #\: entry))))
 	  strings))
 
 ;;; C.f. performance:
