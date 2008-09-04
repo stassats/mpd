@@ -1,4 +1,4 @@
-;;; -*- Mode: Lisp; Syntax: ANSI-Common-Lisp; Base: 10 -*-
+;;; -*- Mode: Lisp -*-
 
 ;;; This software is in the public domain and is
 ;;; provided with absolutely no warranty.

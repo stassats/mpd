@@ -1,4 +1,4 @@
-;;; -*- Mode: Lisp; Syntax: ANSI-Common-Lisp; Base: 10 -*-
+;;; -*- Mode: Lisp -*-
 
 ;;; This software is in the public domain and is
 ;;; provided with absolutely no warranty.
@@ -20,9 +20,9 @@
   (loop
      for line = (read-line stream nil)
      until (string= line "OK" :end1 2)
+     collect line
      if (string= line "ACK" :end1 3) do
-     (handle-error (subseq line 4))
-     collect line))
+     (handle-error (subseq line 4))))
 
 (defun handle-error (text)
   (let* ((error-id (parse-integer text :start 1 :junk-allowed t))
@@ -77,31 +77,28 @@
 
 (defun parse-list (list &optional class)
   "Make a list of new instances of the class `class' with initargs from
-   a list of strings 'key: value'. Each track is separeted by the `file' key."
+   a list of strings `key: value'. Each track is separeted by the `file' key."
   (let (track)
-    (labels ((create-track ()
+    (flet ((create-track ()
+	     (when track
 	       (list
-		(if class
-		    (apply 'make-instance class track)
-		    track))))
+		(apply 'make-instance class track)))))
       (nconc
        (mapcan (lambda (x)
-		 (let* ((pair (split-value x))
-			(key (car pair)))
-		   (cond ((and track (eq key :file))
-			  (prog1 (create-track)
-			    (setf track pair)))
-			 ((or (eq key :directory) (eq key :playlist))
-			  (list pair))
-			 (t (setf track (nconc track pair))
-			    nil))))
+		 (let ((pair (split-value x)))
+		   (case (car pair)
+		     ((:file) (prog1 (create-track)
+				(setf track pair)))
+		     ((:directory :playlist)
+		      (list pair))
+		     (t (nconc track pair)
+			nil))))
 	       list)
-       (when track (create-track))))))
+       (create-track)))))
 
-;;; think about formatter
 (defmacro send (&rest commands)
   `(send-command (format nil "~{~A~^ ~}"
-			 (remove-if #'null (list ,@commands)))
+			 (remove nil (list ,@commands)))
 		 connection))
 
 (defmacro defcommand (name parameters &body body)
@@ -123,4 +120,3 @@
     (if (position #\Space string)
 	(format nil "~s" string)
 	string)))
-
