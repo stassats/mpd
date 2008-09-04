@@ -9,6 +9,7 @@
 
 (defcommand password (password)
   "Authentication."
+  (check-args string password)
   (send "password" password))
 
 (defcommand disconnect ()
@@ -22,9 +23,11 @@
       (make-track track 'playlist))))
 
 (defcommand disable-output (id)
+  (check-args integer id)
   (send "disableoutput" id))
 
 (defcommand enable-output (id)
+  (check-args integer id)
   (send "enableoutput" id))
 
 (defcommand ping ()
@@ -63,7 +66,7 @@
   (send "pause"))
 
 (defcommand play (&optional song-number)
-  (check-type song-number (or integer null) "an integer")
+  (check-args (or integer null) song-number)
   "Begin playing the playlist starting from song-number, default is 0."
   (send "play" song-number))
 
@@ -83,13 +86,13 @@
 
 (defcommand list-playlist (name)
   "List files in the playlist `name'"
-  (filter-keys (send "listplaylist"
-		     (process-string name))))
+  (check-args string name)
+  (filter-keys (send "listplaylist" name)))
 
 (defcommand list-playlist-info (name)
   "List metadata of tracks in the playlist `name'"
-  (parse-list (send "listplaylistinfo" (process-string name))
-	      'playlist))
+  (check-args string name)
+  (parse-list (send "listplaylistinfo" name) 'playlist))
 
 (defcommand playlist ()
   "Return list of files in the current playlist."
@@ -101,20 +104,23 @@
 
 (defcommand save-playlist (filename)
   "Save the current playlist to the file in the playlist directory."
+  (check-args string filename)
   (send "save" filename))
 
 (defcommand load-playlist (filename)
   "Load playlist from file."
+  (check-args string filename)
   (send "load" filename))
 
 (defcommand rename-playlist (name new-name)
   "Rename playlist."
+  (check-args string name new-name)
   (unless (equal name new-name)
     (send "rename" name new-name)))
 
 (defcommand playlist-info (&optional id)
   "Return content of the current playlist."
-  (check-type id (or integer null) "an integer")
+  (check-args (or integer null) id)
   (if id
       (make-track (send "playlistinfo" id) 'playlist)
       (parse-list (send "playlistinfo") 'playlist)))
@@ -139,10 +145,9 @@
 
 (defcommand move (from to)
   "Move track from `from' to `to' in the playlist."
-  (check-type from integer "an integer")
-  (check-type to integer "an integer")
+  (check-args integer from to)
   (unless (= from to)
-   (send "move" from to)))
+    (send "move" from to)))
 
 (defgeneric move-id (connection id to)
   (:documentation "Move track with `id' to `to' in the playlist."))
@@ -155,10 +160,9 @@
 
 (defcommand swap (first second)
   "Swap positions of two tracks."
-  (check-type first integer "an integer")
-  (check-type second integer "an integer")
+  (check-args integer first second)
   (unless (= first second)
-   (send "swap" first second)))
+    (send "swap" first second)))
 
 (defgeneric swap-id (connection first second)
   (:documentation "Swap positions of two tracks by id."))
@@ -171,7 +175,7 @@
 
 (defcommand delete-track (number)
   "Delete track from playlist."
-  (check-type number integer "an integer")
+  (check-args integer number)
   (send "delete" number))
 
 (defgeneric delete-id (connection id)
@@ -196,8 +200,8 @@
 (defcommand mpd-find (type what)
   "Find tracks in the database with a case sensitive, exact match."
   (assert (member type +tag-types+))
-  (parse-list (send "find" type (process-string what))
-	      'track))
+  (check-args string what)
+  (parse-list (send "find" type what) 'track))
 
 (defcommand mpd-list (metadata-1 &optional metadata-2 search-term)
   "List all metadata of `metadata-1'.
@@ -208,6 +212,7 @@ then list all `metadata-1' in which `metadata-2' has value `search-term'."
 (defcommand mpd-search (type what)
   "Find tracks in the database with a case sensitive, inexact match."
   (assert (member type +tag-types+))
+  (check-args string what)
   (parse-list (send "search" type what) 'track))
 
 (defcommand list-all-info (&optional path)
@@ -216,10 +221,12 @@ then list all `metadata-1' in which `metadata-2' has value `search-term'."
 
 (defcommand list-all (&optional path)
   "Lists all files in `path' recursively. Default path is /."
+  (check-args (or string null) path)
   (filter-keys (send "listall" path)))
 
 (defcommand list-info (&optional path)
   "Show contents of directory."
+  (check-args (or string null) path)
   (parse-list (send "lsinfo" path) 'track))
 
 (defcommand mpd-count (scope query)

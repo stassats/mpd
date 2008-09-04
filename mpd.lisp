@@ -22,10 +22,10 @@
      until (string= line "OK" :end1 2)
      collect line
      if (string= line "ACK" :end1 3) do
-     (handle-error (subseq line 4))))
+       (handle-error line)))
 
 (defun handle-error (text)
-  (let* ((error-id (parse-integer text :start 1 :junk-allowed t))
+  (let* ((error-id (parse-integer text :start 5 :junk-allowed t))
 	 (delimiter (position #\] text))
 	 (condition (cdr (assoc error-id +error-ids-alist+))))
     (error condition :text (subseq text (+ delimiter 2)))))
@@ -96,6 +96,17 @@
 	       list)
        (create-track)))))
 
+(defun process-string (string)
+  (when string
+    (let ((string
+	   (string-trim '(#\Space #\Tab #\Newline) string)))
+      (assert (> (length string) 0))
+      (if (position #\Space string)
+	  (format nil "~s" string)
+	  string))))
+
+;;; Macros
+
 (defmacro send (&rest commands)
   `(send-command (format nil "~{~A~^ ~}"
 			 (remove nil (list ,@commands)))
@@ -113,10 +124,15 @@
        ,@decl
        ,@forms)))
 
-(defun process-string (string)
-  (let ((string
-	 (string-trim '(#\Space #\Tab #\Newline) string)))
-    (assert (> (length string) 0))
-    (if (position #\Space string)
-	(format nil "~s" string)
-	string)))
+(defmacro check-args (type &rest args)
+  (if (or (eq type 'string)
+	  (equal type '(or string null)))
+      `(progn ,@(mapcan
+		 (lambda (arg)
+		   `((check-type ,arg ,type "a string")
+		     (setf ,arg (process-string ,arg))))
+		 args))
+      `(progn ,@(mapcar
+		 (lambda (arg)
+		   `(check-type ,arg ,type "an integer"))
+		 args))))
