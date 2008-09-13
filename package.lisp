@@ -2,82 +2,84 @@
 
 (in-package :cl-user)
 
-(defpackage :mpd
-  (:use :cl :usocket :alexandria)
+(defpackage #:mpd
+  (:use #:cl #:usocket #:alexandria)
   (:export
-   :*defualt-host*
-   :*default-port*
-   :connect
-   :disconnect
-   :password
-   :with-mpd
-   :disable-output
-   :enableoutput
-   :outputs
+   #:*defualt-host*
+   #:*default-port*
+   #:connect
+   #:disconnect
+   #:password
+   #:with-mpd
+   #:disable-output
+   #:enable-output
+   #:outputs
 
-   :ping
-   :kill
-   :status
+   #:ping
+   #:kill
+   #:status
 
-   :now-playing
-   :pause
-   :play
-   :stop
-   :previous
-   :next
-   :set-volume
+   #:now-playing
+   #:pause
+   #:play
+   #:stop
+   #:previous
+   #:next
+   #:set-volume
 
-   :add
-   :add-id
-   :move
-   :move-id
-   :swap
-   :swap-id
-   :clear-playlist
-   :delete-track
-   :delete-id
-   :save-playlist
-   :load-plalist
-   :rename-playlist
-   :playlist-info
-   :shuffle
-   :list-playlist
-   :list-playlist-info
+   #:add
+   #:add-id
+   #:move
+   #:move-id
+   #:swap
+   #:swap-id
+   #:clear-playlist
+   #:delete-track
+   #:delete-id
+   #:save-playlist
+   #:load-playlist
+   #:rename-playlist
+   #:playlist-info
+   #:shuffle
+   #:list-playlist
+   #:list-playlist-info
 
-   :update
-   :tag-types
-   :url-handlers
-   :list-all
-   :list-info
-   :list-all-info
+   #:update
 
-   :commands
-   :not-commands
-   :mpd-find
-   :mpd-list
-   :mpd-search
+   #:list-all
+   #:list-info
+   #:list-all-info
+   #:find-tracks
+   #:search-tracks
+   #:list-metadata
+   #:count-tracks
 
-   :track
-   :file
-   :title
-   :artist
-   :album
-   :date
-   :duration
-   :genre
-   :composer
+   #:commands
+   #:not-commands
+   #:tag-types
+   #:url-handlers
 
-   :playlist
-   :position-in-playlist
-   :id
+   #:track
+   #:file
+   #:title
+   #:artist
+   #:album
+   #:date
+   #:duration
+   #:genre
+   #:composer
 
-   :mpd-error
-   :protocol-mismatch
-   :bad-argument
-   :incorrect-password
-   :not-permitted
-   :unknown-command
-   :not-exist
-   :playlist-size-exceed
-   :already-updating
-   :exist))
+   #:playlist
+   #:position-in-playlist
+   #:id
+
+   #:mpd-error
+   #:protocol-mismatch
+   #:bad-argument
+   #:incorrect-password
+   #:not-permitted
+   #:unknown-command
+   #:not-exist
+   #:playlist-size-exceed
+   #:already-updating
+   #:exist))

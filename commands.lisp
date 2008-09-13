@@ -132,6 +132,7 @@
   (add connection (file what)))
 
 (defmethod-command add ((what string))
+  (check-args string what)
   (send "add" what))
 
 (defgeneric add-id (connection what)
@@ -141,6 +142,7 @@
   (add connection (file what)))
 
 (defmethod-command add-id ((what string))
+  (check-args string what)
   (car (filter-keys (send "addid" what))))
 
 (defcommand move (from to)
@@ -197,19 +199,19 @@
   "Scan directory for music files and add them to the database."
   (send "update" path))
 
-(defcommand mpd-find (type what)
+(defcommand find-tracks (type what)
   "Find tracks in the database with a case sensitive, exact match."
   (assert (member type +tag-types+))
   (check-args string what)
   (parse-list (send "find" type what) 'track))
 
-(defcommand mpd-list (metadata-1 &optional metadata-2 search-term)
+(defcommand list-metadata (metadata-1 &optional metadata-2 search-term)
   "List all metadata of `metadata-1'.
 If `metadata-2' & `search-term' are supplied,
 then list all `metadata-1' in which `metadata-2' has value `search-term'."
   (send "list" metadata-1 metadata-2 search-term))
 
-(defcommand mpd-search (type what)
+(defcommand search-tracks (type what)
   "Find tracks in the database with a case sensitive, inexact match."
   (assert (member type +tag-types+))
   (check-args string what)
@@ -229,9 +231,10 @@ then list all `metadata-1' in which `metadata-2' has value `search-term'."
   (check-args (or string null) path)
   (parse-list (send "lsinfo" path) 'track))
 
-(defcommand mpd-count (scope query)
+(defcommand count-tracks (scope query)
   "Number of songs and their total playtime matching `query'.
 Return: (number playtime)."
+  (check-args string query)
   (filter-keys (send "count" scope query)))
 
 (defcommand set-volume (value)

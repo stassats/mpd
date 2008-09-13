@@ -17,14 +17,14 @@
       (when password (password connection password)))))
 
 (defun read-answer (stream)
-  (loop
-     for line = (read-line stream nil)
-     until (string= line "OK" :end1 2)
-     collect line
-     if (string= line "ACK" :end1 3) do
-       (handle-error line)))
+  (loop for line = (read-line stream nil)
+        until (string= line "OK" :end1 2)
+        collect line
+        if (string= line "ACK" :end1 3)
+        do (handle-error line)))
 
 (defun handle-error (text)
+  ;; Error format: ACK [<error id>@<position>] {<comand name>} <description>
   (let* ((error-id (parse-integer text :start 5 :junk-allowed t))
 	 (delimiter (position #\] text))
 	 (condition (cdr (assoc error-id +error-ids-alist+))))
@@ -47,7 +47,7 @@
 	(error 'mpd-error :text (format nil "The stream ~A is not opened." stream)))))
 
 (defun split-value (string)
-  "Split a string 'key: value' into (list :key value)."
+  "Split a string `key: value' into (list :key value)."
   (let* ((column-position (position #\: string))
 	 (keyword (make-keyword
 		   (string-upcase (subseq string 0 column-position))))
@@ -67,12 +67,9 @@
 	    (subseq entry (+ 2 (position #\: entry))))
 	  strings))
 
-;;; C.f. performance:
-;; (apply (lambda (&key foo bar) (make-instance
-;; 	    'zot :quux 42 :foo foo :bar bar)) list)
 (defun make-track (data type)
   "Make a new instance of the class playlist with initargs from
-   the list of strings 'key: value'."
+   the list of strings `key: value'."
   (apply 'make-instance type (split-values data)))
 
 (defun parse-list (list &optional class)
@@ -125,8 +122,10 @@
        ,@forms)))
 
 (defmacro check-args (type &rest args)
+  "Check string and integer arguments."
   (if (or (eq type 'string)
-	  (equal type '(or string null)))
+	  (and (listp type)
+	       (member 'string type)))
       `(progn ,@(mapcan
 		 (lambda (arg)
 		   `((check-type ,arg ,type "a string")
