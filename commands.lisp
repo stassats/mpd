@@ -121,6 +121,11 @@
       (make-class (send "playlistinfo" id) 'playlist)
       (parse-list (send "playlistinfo") 'playlist)))
 
+(defcommand playlist-changes (version)
+  "Return changed songs currently in the playlist since `version'."
+  (check-args unsigned-byte version)
+  (parse-list (send "plchanges" version) 'playlist))
+
 (defgeneric add (connection what)
   (:documentation "Add file or directory to the current playlist."))
 

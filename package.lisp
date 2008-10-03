@@ -39,6 +39,7 @@
    #:load-playlist
    #:rename-playlist
    #:playlist-info
+   #:playlist-changes
    #:shuffle
    #:list-playlist
    #:list-playlist-info
@@ -85,7 +86,7 @@
    #:volume          
    #:repeat          
    #:randomized      
-   #:playlist-id
+   #:playlist-version
    #:playlist-length 
    #:xfade           
    #:state           

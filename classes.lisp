@@ -93,7 +93,7 @@
    (random
     :reader randomized :initarg :random :initform nil)
    (playlist
-    :reader playlist-id :initarg :playlist :initform nil)
+    :reader playlist-version :initarg :playlist :initform nil)
    (playlist-length
     :reader playlist-length :initarg :playlistlength :initform nil)
    (xfade
@@ -118,7 +118,7 @@
                names)))
 
 (generate-status-commands
- (volume repeat randomized playlist-id playlist-length
+ (volume repeat randomized playlist-version playlist-length
   xfade state audio bitrate duration songid song))
 
 (defparameter *integer-keys*

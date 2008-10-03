@@ -36,7 +36,7 @@
           (progn ,@body)
        (disconnect ,var))))
 
-(defun send-command (command connection)
+(defun send-command (connection command)
   "Send command to MPD."
   (let ((stream (socket-stream connection)))
     (unless (open-stream-p stream)
@@ -125,9 +125,9 @@
 
 (defmacro send (&rest commands)
   "Macro for using inside `defcommand'."
-  `(send-command (format nil "~{~A~^ ~}"
-                         (remove nil (list ,@commands)))
-                 connection))
+  `(send-command connection
+                 (format nil "~{~A~^ ~}"
+                         (remove nil (list ,@commands)))))
 
 (defmacro defcommand (name parameters &body body)
   (multiple-value-bind (forms decl doc) (parse-body body :documentation t)
