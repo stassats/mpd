@@ -3,28 +3,28 @@
 ;;; This software is in the public domain and is
 ;;; provided with absolutely no warranty.
 
-(in-package :mpd)
+(in-package #:mpd)
 
 (defvar *defualt-host* "localhost")
 (defvar *default-port* 6600)
 
-(defun connect (&key (host *defualt-host*) (port *default-port*)
-		password)
+(defun connect (&key (host *defualt-host*) (port *default-port*) password)
   "Connect to MPD."
   (let ((connection (socket-connect host port)))
     (prog1 (values connection
 		   (read-answer (socket-stream connection)))
-      (when password (password connection password)))))
+      (when password
+	(password connection password)))))
 
 (defun read-answer (stream)
-  (loop for line = (read-line stream nil)
+  (loop for line = (read-line stream)
         until (string= line "OK" :end1 2)
         collect line
-        if (string= line "ACK" :end1 3)
-        do (handle-error line)))
+        when (string= line "ACK" :end1 3)
+        do (throw-error line)))
 
-(defun handle-error (text)
-  ;; Error format: ACK [<error id>@<position>] {<comand name>} <description>
+(defun throw-error (text)
+  ;; Error format: `ACK [<error id>@<position>] {<comand name>} <description>'
   (let* ((error-id (parse-integer text :start 5 :junk-allowed t))
 	 (delimiter (position #\] text))
 	 (condition (cdr (assoc error-id +error-ids-alist+))))
@@ -39,27 +39,44 @@
 (defun send-command (command connection)
   "Send command to MPD."
   (let ((stream (socket-stream connection)))
-    (if (open-stream-p stream)
-	(progn
-	  (write-line command stream)
-	  (force-output stream)
-	  (read-answer stream))
-	(error 'mpd-error :text (format nil "The stream ~A is not opened." stream)))))
+    (unless (open-stream-p stream)
+      (error 'mpd-error :text (format nil "The stream ~A is not opened." stream)))
+    (write-line command stream)
+    (finish-output stream)
+    (read-answer stream)))
+
+(defun to-keyword (name)
+  (intern (string-upcase name) :keyword))
 
 (defun split-value (string)
   "Split a string `key: value' into (list :key value)."
   (let* ((column-position (position #\: string))
-	 (keyword (make-keyword
-		   (string-upcase (subseq string 0 column-position))))
+	 (key (to-keyword
+	       (subseq string 0 column-position)))
 	 (value (subseq string (+ 2 column-position))))
-    (list keyword
-	  (if (member keyword +integer-keys+)
-	      (parse-integer value)
-	      value))))
+    (process-value key value)))
 
 (defun split-values (strings)
-  "Transform the list of strings 'key: value' into the plist."
+  "Transform a list of strings 'key: value' into the plist."
   (mapcan #'split-value strings))
+
+(defun process-value (key value)
+  (list key
+	(funcall (value-processing-function key) value)))
+
+(defun value-processing-function (key)
+  (if (member key *integer-keys*)
+      #'parse-integer
+      (getf *value-processing-functions* key #'identity)))
+
+(defun parse-time (time)
+  "\"10:20\" -> (10 20); \"10\" -> 10"
+  (multiple-value-bind (first stop)
+      (parse-integer time :junk-allowed t)
+    (if (= stop (length time))
+	first
+	(list first
+	      (parse-integer time :start (1+ stop))))))
 
 (defun filter-keys (strings)
   "Transform the list of strings 'key: value' into the list of values."
@@ -97,7 +114,8 @@
   (when string
     (let ((string
 	   (string-trim '(#\Space #\Tab #\Newline) string)))
-      (assert (> (length string) 0))
+      (when (zerop (length string))
+	(error 'mpd-error :text "Zero length argument."))
       (if (position #\Space string)
 	  (format nil "~s" string)
 	  string))))
@@ -105,6 +123,7 @@
 ;;; Macros
 
 (defmacro send (&rest commands)
+  "Macro for using inside `defcommand'."
   `(send-command (format nil "~{~A~^ ~}"
 			 (remove nil (list ,@commands)))
 		 connection))

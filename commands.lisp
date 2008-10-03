@@ -5,7 +5,7 @@
 ;;; This software is in the public domain and is
 ;;; provided with absolutely no warranty.
 
-(in-package :mpd)
+(in-package #:mpd)
 
 (defcommand password (password)
   "Authentication."

@@ -3,7 +3,7 @@
 ;;; This software is in the public domain and is
 ;;; provided with absolutely no warranty.
 
-(in-package :mpd)
+(in-package #:mpd)
 
 (define-condition mpd-error (error)
   ((text :initarg :text :reader text
@@ -85,20 +85,29 @@
     :initform nil :initarg :id :accessor id
     :type integer)))
 
-(define-constant +integer-keys+
-    '(:time :id :pos)
-  :test #'equal
-  :documentation "List of keys which values must be integers.")
-
 (defclass status ()
-  ((artists         :accessor get-artists         :initarg :artists)
-   (volume          :accessor get-volume          :initarg :volume)
+  ((volume          :accessor get-volume          :initarg :volume)
    (repeat          :accessor get-repeat          :initarg :repeat)
    (random          :accessor get-random          :initarg :random)
    (playlist        :accessor get-playlist        :initarg :playlist)
    (playlist-length :accessor get-playlist-length :initarg :playlistlength)
    (xfade           :accessor get-xfade           :initarg :xfade)
-   (state           :accessor get-state           :initarg :state)))
+   (state           :accessor get-state           :initarg :state)
+   (audio           :accessor get-audio           :initarg :audio)
+   (bitrate         :accessor get-bitrate         :initarg :bitrate)
+   (time            :accessor get-time            :initarg :time)
+   (songid          :accessor get-songid          :initarg :songid)
+   (song            :accessor get-song            :initarg :song)))
+
+(defparameter *integer-keys*
+  '(:id :pos :volume :repeat :random :playlist
+    :xfade :song :songid :bitrate :playlistlength
+    :artists :albums :songs :uptime :playtime
+    :db_playtime :db_update)
+  "List of keys which values must be integers.")
+
+(defparameter *value-processing-functions*
+  '(:time parse-time :state to-keyword))
 
 (defmethod print-object ((object track) stream)
   (print-unreadable-object (object stream :type t :identity t)

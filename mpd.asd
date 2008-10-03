@@ -1,15 +1,15 @@
 ;;; -*- Mode: Lisp -*-
 
 (defpackage #:mpd-asd
-  (:use :cl :asdf))
+  (:use #:cl #:asdf))
 
-(in-package :mpd-asd)
+(in-package #:mpd-asd)
 
-(defsystem mpd
+(defsystem #:mpd
   :name "mpd"
   :description "MPD client"
   :serial t
-  :depends-on (:usocket :alexandria)
+  :depends-on (#:usocket #:alexandria)
   :components ((:file "package")
 	       (:file "classes")
 	       (:file "mpd")
