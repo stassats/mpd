@@ -25,7 +25,6 @@
    #:stop
    #:previous
    #:next
-   #:set-volume
 
    #:add
    #:add-id
@@ -82,4 +81,17 @@
    #:not-exist
    #:playlist-size-exceed
    #:already-updating
-   #:exist))
+   #:exist
+
+   #:volume          
+   #:repeat          
+   #:randomized      
+   #:playlist        
+   #:playlist-length 
+   #:xfade           
+   #:state           
+   #:audio           
+   #:bitrate         
+   #:duration        
+   #:songid          
+   #:song))

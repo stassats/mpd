@@ -20,7 +20,7 @@
   "Return instance of playlist with current song."
   (let ((track (send "currentsong")))
     (when track
-      (make-track track 'playlist))))
+      (make-class track 'playlist))))
 
 (defcommand disable-output (id)
   (check-args integer id)
@@ -40,7 +40,7 @@
 
 (defcommand status ()
   "Return status of MPD."
-  (split-values (send "status")))
+  (make-class (send "status") 'status))
 
 (defcommand stats ()
   "Return statisics."
@@ -122,7 +122,7 @@
   "Return content of the current playlist."
   (check-args (or integer null) id)
   (if id
-      (make-track (send "playlistinfo" id) 'playlist)
+      (make-class (send "playlistinfo" id) 'playlist)
       (parse-list (send "playlistinfo") 'playlist)))
 
 (defgeneric add (connection what)
@@ -249,3 +249,6 @@ Return: (number playtime)."
 (defcommand url-handlers ()
   "Get a list of available URL handlers."
   (filter-keys (send "urlhandlers")))
+
+(defun (setf volume) (value connection)
+  (set-volume connection value))

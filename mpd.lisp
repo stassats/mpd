@@ -79,12 +79,12 @@
 	      (parse-integer time :start (1+ stop))))))
 
 (defun filter-keys (strings)
-  "Transform the list of strings 'key: value' into the list of values."
+  "Transform a list of strings 'key: value' into a list of values."
   (mapcar (lambda (entry)
 	    (subseq entry (+ 2 (position #\: entry))))
 	  strings))
 
-(defun make-track (data type)
+(defun make-class (data type)
   "Make a new instance of the class playlist with initargs from
    the list of strings `key: value'."
   (apply 'make-instance type (split-values data)))
@@ -111,6 +111,7 @@
        (create-track)))))
 
 (defun process-string (string)
+  "Check for emtpy strings, end escape strings when needed."
   (when string
     (let ((string
 	   (string-trim '(#\Space #\Tab #\Newline) string)))
