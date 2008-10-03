@@ -94,10 +94,6 @@
   (check-args string name)
   (parse-list (send "listplaylistinfo" name) 'playlist))
 
-(defcommand playlist ()
-  "Return list of files in the current playlist."
-  (filter-keys (send "playlist")))
-
 (defcommand clear-playlist ()
   "Clear the current playlist."
   (send "clear"))

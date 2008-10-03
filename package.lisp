@@ -68,7 +68,6 @@
    #:genre
    #:composer
 
-   #:playlist
    #:position-in-playlist
    #:id
 
