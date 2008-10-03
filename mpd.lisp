@@ -12,9 +12,9 @@
   "Connect to MPD."
   (let ((connection (socket-connect host port)))
     (prog1 (values connection
-		   (read-answer (socket-stream connection)))
+                   (read-answer (socket-stream connection)))
       (when password
-	(password connection password)))))
+        (password connection password)))))
 
 (defun read-answer (stream)
   (loop for line = (read-line stream)
@@ -26,14 +26,14 @@
 (defun throw-error (text)
   ;; Error format: `ACK [<error id>@<position>] {<comand name>} <description>'
   (let* ((error-id (parse-integer text :start 5 :junk-allowed t))
-	 (delimiter (position #\] text))
-	 (condition (cdr (assoc error-id +error-ids-alist+))))
+         (delimiter (position #\] text))
+         (condition (cdr (assoc error-id +error-ids-alist+))))
     (error condition :text (subseq text (+ delimiter 2)))))
 
 (defmacro with-mpd ((var &rest options) &body body)
   `(let ((,var (connect ,@options)))
      (unwind-protect
-	  (progn ,@body)
+          (progn ,@body)
        (disconnect ,var))))
 
 (defun send-command (command connection)
@@ -51,9 +51,9 @@
 (defun split-value (string)
   "Split a string `key: value' into (list :key value)."
   (let* ((column-position (position #\: string))
-	 (key (to-keyword
-	       (subseq string 0 column-position)))
-	 (value (subseq string (+ 2 column-position))))
+         (key (to-keyword
+               (subseq string 0 column-position)))
+         (value (subseq string (+ 2 column-position))))
     (process-value key value)))
 
 (defun split-values (strings)
@@ -62,7 +62,7 @@
 
 (defun process-value (key value)
   (list key
-	(funcall (value-processing-function key) value)))
+        (funcall (value-processing-function key) value)))
 
 (defun value-processing-function (key)
   (if (member key *integer-keys*)
@@ -74,15 +74,15 @@
   (multiple-value-bind (first stop)
       (parse-integer time :junk-allowed t)
     (if (= stop (length time))
-	first
-	(list first
-	      (parse-integer time :start (1+ stop))))))
+        first
+        (list first
+              (parse-integer time :start (1+ stop))))))
 
 (defun filter-keys (strings)
   "Transform a list of strings 'key: value' into a list of values."
   (mapcar (lambda (entry)
-	    (subseq entry (+ 2 (position #\: entry))))
-	  strings))
+            (subseq entry (+ 2 (position #\: entry))))
+          strings))
 
 (defun make-class (data type)
   "Make a new instance of the class playlist with initargs from
@@ -94,40 +94,40 @@
    a list of strings `key: value'. Each track is separeted by the `file' key."
   (let (track)
     (flet ((create-track ()
-	     (when track
-	       (list
-		(apply 'make-instance class track)))))
+             (when track
+               (list
+                (apply 'make-instance class track)))))
       (nconc
        (mapcan (lambda (x)
-		 (let ((pair (split-value x)))
-		   (case (car pair)
-		     ((:file) (prog1 (create-track)
-				(setf track pair)))
-		     ((:directory :playlist)
-		      (list pair))
-		     (t (nconc track pair)
-			nil))))
-	       list)
+                 (let ((pair (split-value x)))
+                   (case (car pair)
+                     ((:file) (prog1 (create-track)
+                                (setf track pair)))
+                     ((:directory :playlist)
+                      (list pair))
+                     (t (nconc track pair)
+                        nil))))
+               list)
        (create-track)))))
 
 (defun process-string (string)
   "Check for emtpy strings, end escape strings when needed."
   (when string
     (let ((string
-	   (string-trim '(#\Space #\Tab #\Newline) string)))
+           (string-trim '(#\Space #\Tab #\Newline) string)))
       (when (zerop (length string))
-	(error 'mpd-error :text "Zero length argument."))
+        (error 'mpd-error :text "Zero length argument."))
       (if (position #\Space string)
-	  (format nil "~s" string)
-	  string))))
+          (format nil "~s" string)
+          string))))
 
 ;;; Macros
 
 (defmacro send (&rest commands)
   "Macro for using inside `defcommand'."
   `(send-command (format nil "~{~A~^ ~}"
-			 (remove nil (list ,@commands)))
-		 connection))
+                         (remove nil (list ,@commands)))
+                 connection))
 
 (defmacro defcommand (name parameters &body body)
   (multiple-value-bind (forms decl doc) (parse-body body :documentation t)
@@ -144,14 +144,14 @@
 (defmacro check-args (type &rest args)
   "Check string and integer arguments."
   (if (or (eq type 'string)
-	  (and (listp type)
-	       (member 'string type)))
+          (and (listp type)
+               (member 'string type)))
       `(progn ,@(mapcan
-		 (lambda (arg)
-		   `((check-type ,arg ,type "a string")
-		     (setf ,arg (process-string ,arg))))
-		 args))
+                 (lambda (arg)
+                   `((check-type ,arg ,type "a string")
+                     (setf ,arg (process-string ,arg))))
+                 args))
       `(progn ,@(mapcar
-		 (lambda (arg)
-		   `(check-type ,arg ,type "an integer"))
-		 args))))
+                 (lambda (arg)
+                   `(check-type ,arg ,type "an integer"))
+                 args))))

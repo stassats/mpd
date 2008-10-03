@@ -7,9 +7,9 @@
 
 (define-condition mpd-error (error)
   ((text :initarg :text :reader text
-	 :initform nil))
+         :initform nil))
   (:report (lambda (condition stream)
-	     (princ (text condition) stream))))
+             (princ (text condition) stream))))
 
 (define-condition unknown-command (mpd-error)
   ())
@@ -47,8 +47,8 @@
   :test #'equal)
 
 (define-constant +tag-types+
-  '(artist album title track name genre date
-    composer performer comment disc filename any)
+  '(:artist :album :title :track :name :genre :date
+    :composer :performer :comment :disc :filename :any)
   :test #'equal
   :documentation "Types of tags for using in `search' and `find'")
 
@@ -89,7 +89,7 @@
   ((volume          :reader volume          :initarg :volume)
    (repeat          :reader repeat          :initarg :repeat)
    (random          :reader randomized      :initarg :random)
-   (playlist        :reader playlist        :initarg :playlist)
+   (playlist        :reader playlist-id      :initarg :playlist)
    (playlist-length :reader playlist-length :initarg :playlistlength)
    (xfade           :reader xfade           :initarg :xfade)
    (state           :reader state           :initarg :state)
@@ -98,6 +98,17 @@
    (time            :reader duration        :initarg :time)
    (songid          :reader songid          :initarg :songid)
    (song            :reader song            :initarg :song)))
+
+(defmacro generate-status-commands (names)
+  `(progn
+     ,@(mapcar (lambda (name)
+                 `(defmethod ,name ((stream stream-usocket))
+                    (,name (status stream))))
+               names)))
+
+(generate-status-commands
+ (volume repeat randomized playlist-id playlist-length
+  xfade state audio bitrate duration songid song))
 
 (defparameter *integer-keys*
   '(:id :pos :volume :repeat :random :playlist

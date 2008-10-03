@@ -252,3 +252,6 @@ Return: (number playtime)."
 
 (defun (setf volume) (value connection)
   (set-volume connection value))
+
+(defmethod volume ((stream stream-usocket))
+  (volume (status stream)))

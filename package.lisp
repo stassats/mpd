@@ -86,7 +86,7 @@
    #:volume          
    #:repeat          
    #:randomized      
-   #:playlist        
+   #:playlist-id
    #:playlist-length 
    #:xfade           
    #:state           
