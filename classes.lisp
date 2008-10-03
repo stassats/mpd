@@ -86,18 +86,29 @@
     :type integer)))
 
 (defclass status ()
-  ((volume          :reader volume          :initarg :volume)
-   (repeat          :reader repeat          :initarg :repeat)
-   (random          :reader randomized      :initarg :random)
-   (playlist        :reader playlist-id      :initarg :playlist)
-   (playlist-length :reader playlist-length :initarg :playlistlength)
-   (xfade           :reader xfade           :initarg :xfade)
-   (state           :reader state           :initarg :state)
-   (audio           :reader audio           :initarg :audio)
-   (bitrate         :reader bitrate         :initarg :bitrate)
-   (time            :reader duration        :initarg :time)
-   (songid          :reader songid          :initarg :songid)
-   (song            :reader song            :initarg :song)))
+  ((volume 
+    :reader volume :initarg :volume :initform nil)
+   (repeat 
+    :reader repeat :initarg :repeat :initform nil)
+   (random
+    :reader randomized :initarg :random :initform nil)
+   (playlist
+    :reader playlist-id :initarg :playlist :initform nil)
+   (playlist-length
+    :reader playlist-length :initarg :playlistlength :initform nil)
+   (xfade
+    :reader xfade :initarg :xfade :initform nil)
+   (state
+    :reader state :initarg :state :initform nil)
+   (audio
+    :reader audio :initarg :audio :initform nil)
+   (bitrate
+    :reader bitrate :initarg :bitrate :initform nil)
+   (time
+    :reader duration :initarg :time :initform nil)
+   (songid
+    :reader songid :initarg :songid :initform nil)
+   (song :reader song :initarg :song :initform nil)))
 
 (defmacro generate-status-commands (names)
   `(progn

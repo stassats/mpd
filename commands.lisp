@@ -237,11 +237,6 @@ Return: (number playtime)."
   (check-args string query)
   (filter-keys (send "count" scope query)))
 
-(defcommand set-volume (value)
-  "Set the volume to the value between 0-100."
-  (check-type value (integer 0 100) "an integer in range 0-100")
-  (send "setvol" value))
-
 (defcommand tag-types ()
   "Get a list of available metadata types."
   (filter-keys (send "tagtypes")))
@@ -251,7 +246,19 @@ Return: (number playtime)."
   (filter-keys (send "urlhandlers")))
 
 (defun (setf volume) (value connection)
-  (set-volume connection value))
+  "Set the volume to the value between 0-100."
+  (check-type value (integer 0 100) "an integer in range 0-100")
+  (send "setvol" value))
 
-(defmethod volume ((stream stream-usocket))
-  (volume (status stream)))
+(defcommand seek (song time)
+  "Skip to a specified point in a song on the playlist."
+  (send "seek" song time))
+
+(defgeneric seek-id (connection song time)
+  (:documentation "Skip to a specified point in a song on the playlist."))
+
+(defmethod-command seek-id ((song playlist) (time integer))
+  (seek-id (id song)))
+
+(defmethod-command seek-id ((song integer) (time integer))
+  (send "seekid" song time))
