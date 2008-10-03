@@ -25,6 +25,7 @@
    #:stop
    #:previous
    #:next
+   #:crossfade
 
    #:add
    #:add-id
@@ -32,7 +33,7 @@
    #:move-id
    #:swap
    #:swap-id
-   #:clear-playlist
+   #:clear
    #:delete-track
    #:delete-id
    #:save-playlist
@@ -43,7 +44,13 @@
    #:shuffle
    #:list-playlist
    #:list-playlist-info
-
+   #:add-to-playlist
+   #:clear-playlist
+   #:delete-from-playlist
+   #:move-in-playlist
+   #:find-in-current-playlist
+   #:search-in-current-playlist
+   
    #:update
 
    #:list-all
@@ -83,15 +90,15 @@
    #:already-updating
    #:exist
 
-   #:volume          
-   #:repeat          
-   #:randomized      
+   #:volume
+   #:repeat
+   #:randomized
    #:playlist-version
-   #:playlist-length 
-   #:xfade           
-   #:state           
-   #:audio           
-   #:bitrate         
-   #:duration        
-   #:songid          
+   #:playlist-length
+   #:xfade
+   #:state
+   #:audio
+   #:bitrate
+   #:duration
+   #:songid
    #:song))

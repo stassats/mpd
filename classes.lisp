@@ -122,14 +122,14 @@
   xfade state audio bitrate duration songid song))
 
 (defparameter *integer-keys*
-  '(:id :pos :volume :repeat :random :playlist
-    :xfade :song :songid :bitrate :playlistlength
-    :artists :albums :songs :uptime :playtime
-    :db_playtime :db_update)
+  '(:id :pos :volume :playlist :playlistlength
+    :xfade :song :songid :bitrate :playtime
+    :artists :albums :songs :uptime :db_playtime :db_update)
   "List of keys which values must be integers.")
 
 (defparameter *value-processing-functions*
-  '(:time parse-time :state to-keyword))
+  '(:time parse-time :state to-keyword
+    :random string-not-zerop :repeat string-not-zerop))
 
 (defmethod print-object ((object track) stream)
   (print-unreadable-object (object stream :type t :identity t)

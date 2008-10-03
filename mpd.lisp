@@ -78,6 +78,9 @@
         (list first
               (parse-integer time :start (1+ stop))))))
 
+(defun string-not-zerop (string)
+  (not (string= string "0")))
+
 (defun filter-keys (strings)
   "Transform a list of strings 'key: value' into a list of values."
   (mapcar (lambda (entry)
@@ -153,5 +156,5 @@
                  args))
       `(progn ,@(mapcar
                  (lambda (arg)
-                   `(check-type ,arg ,type "an integer"))
+                   `(check-type ,arg ,type))
                  args))))

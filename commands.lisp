@@ -82,6 +82,11 @@
   "Play previous track in the playlist."
   (send "previous"))
 
+(defcommand crossfade (seconds)
+  (check-args unsigned-byte seconds)
+  "Sets crossfading between songs."
+  (send "crossfade" seconds))
+
 ;; Playlist
 
 (defcommand list-playlist (name)
@@ -94,7 +99,7 @@
   (check-args string name)
   (parse-list (send "listplaylistinfo" name) 'playlist))
 
-(defcommand clear-playlist ()
+(defcommand clear ()
   "Clear the current playlist."
   (send "clear"))
 
@@ -125,6 +130,38 @@
   "Return changed songs currently in the playlist since `version'."
   (check-args unsigned-byte version)
   (parse-list (send "plchanges" version) 'playlist))
+
+(defcommand add-to-playlist (name path)
+  "Add `path' to the playlist `name'."
+  (check-args string name path)
+  (send "playlistadd" name path))
+
+(defcommand clear-playlist (name)
+  "Clear playlist `name'."
+  (check-args string name)
+  (send "playlistclear"))
+
+(defcommand delete-from-playlist (name song-id)
+  "Delete `song-id' from playlist `name'."
+  (check-args string name)
+  (check-args integer song-id)
+  (send "playlistdelete" name song-id))
+
+(defcommand move-in-playlist (name song-id position)
+  "Move `song-id' in playlist `name' to `position'."
+  (check-args string name)
+  (check-args integer song-id position)
+  (send "playlistmove" name song-id position))
+
+(defcommand find-in-current-playlist (scope query)
+  "Search for songs in the current playlist with strict matching."
+  (check-args string scope query)
+  (send "playlistfind" scope query))
+
+(defcommand search-in-current-playlist (scope query)
+  "Search case-insensitively with partial matches for songs in the current playlist"
+  (check-args string scope query)
+  (send "playlistsearch" scope query))
 
 (defgeneric add (connection what)
   (:documentation "Add file or directory to the current playlist."))
@@ -251,6 +288,14 @@ Return: (number playtime)."
   (check-type value (integer 0 100) "an integer in range 0-100")
   (send "setvol" value))
 
+(defun (setf randomized) (value connection)
+  "NIL---turn off random mode, non-nil---turn on random mode."
+  (send "random" (if value 1 0)))
+
+(defun (setf repeat) (value connection)
+  "NIL---turn off repeat mode, non-nil---turn on repeat mode."
+  (send "repeat" (if value 1 0)))
+
 (defcommand seek (song time)
   "Skip to a specified point in a song on the playlist."
   (send "seek" song time))
@@ -259,7 +304,7 @@ Return: (number playtime)."
   (:documentation "Skip to a specified point in a song on the playlist."))
 
 (defmethod-command seek-id ((song playlist) (time integer))
-  (seek-id (id song)))
+  (seek-id connection (id song) time))
 
 (defmethod-command seek-id ((song integer) (time integer))
   (send "seekid" song time))
