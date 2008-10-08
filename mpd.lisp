@@ -45,6 +45,8 @@
     (finish-output stream)
     (read-answer stream)))
 
+;;; Parsing
+
 (defun to-keyword (name)
   (intern (string-upcase name) :keyword))
 
@@ -112,6 +114,8 @@
                         nil))))
                list)
        (create-track)))))
+
+;;;
 
 (defun process-string (string)
   "Check for emtpy strings, end escape strings when needed."

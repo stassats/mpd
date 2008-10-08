@@ -11,29 +11,14 @@
   (:report (lambda (condition stream)
              (princ (text condition) stream))))
 
-(define-condition unknown-command (mpd-error)
-  ())
-
-(define-condition incorrect-password (mpd-error)
-  ())
-
-(define-condition bad-argument (mpd-error)
-  ())
-
-(define-condition not-permitted (mpd-error)
-  ())
-
-(define-condition not-exist (mpd-error)
-  ())
-
-(define-condition playlist-size-exceed (mpd-error)
-  ())
-
-(define-condition already-updating (mpd-error)
-  ())
-
-(define-condition exist (mpd-error)
-  ())
+(macrolet ((define-conditions (names)
+             `(progn ,@(mapcar
+                        (lambda (name)
+                          `(define-condition ,name (mpd-error) ()))
+                        names))))
+  (define-conditions (bad-argument incorrect-password
+                      not-permitted unknown-command not-exist
+                      playlist-size-exceed already-updating exist)))
 
 (define-constant +error-ids-alist+
   '((2 . bad-argument)
@@ -134,7 +119,7 @@
                           names))))
   (generate-commands status
                      (volume repeat randomized playlist-version playlist-length
-                             xfade state audio bitrate duration songid song))
+                      xfade state audio bitrate duration songid song))
   (generate-commands stats
                      (artists albums songs uptime playtime db-playtime db-update)))
 
