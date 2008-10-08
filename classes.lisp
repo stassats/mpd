@@ -86,9 +86,9 @@
     :type integer)))
 
 (defclass status ()
-  ((volume 
+  ((volume
     :reader volume :initarg :volume :initform nil)
-   (repeat 
+   (repeat
     :reader repeat :initarg :repeat :initform nil)
    (random
     :reader randomized :initarg :random :initform nil)
@@ -110,26 +110,45 @@
     :reader songid :initarg :songid :initform nil)
    (song :reader song :initarg :song :initform nil)))
 
-(defmacro generate-status-commands (names)
-  `(progn
-     ,@(mapcar (lambda (name)
-                 `(defmethod ,name ((stream stream-usocket))
-                    (,name (status stream))))
-               names)))
+(defclass stats ()
+  ((artists
+    :reader artists :initarg :artists :initform nil)
+   (albums
+    :reader albums :initarg :albums :initform nil)
+   (songs
+    :reader songs :initarg :songs :initform nil)
+   (uptime
+    :reader uptime :initarg :uptime :initform nil)
+   (playtime
+    :reader playtime :initarg :playtime :initform nil)
+   (db-playtime
+    :reader db-playtime :initarg :db_playtime :initform nil)
+   (db-update
+    :reader db-update :initarg :db_update :initform nil)))
 
-(generate-status-commands
- (volume repeat randomized playlist-version playlist-length
-  xfade state audio bitrate duration songid song))
+(macrolet ((generate-commands (class names)
+             `(progn
+                ,@(mapcar (lambda (name)
+                            `(defmethod ,name ((stream stream-usocket))
+                               (,name (,class stream))))
+                          names))))
+  (generate-commands status
+                     (volume repeat randomized playlist-version playlist-length
+                             xfade state audio bitrate duration songid song))
+  (generate-commands stats
+                     (artists albums songs uptime playtime db-playtime db-update)))
 
 (defparameter *integer-keys*
   '(:id :pos :volume :playlist :playlistlength
     :xfade :song :songid :bitrate :playtime
-    :artists :albums :songs :uptime :db_playtime :db_update)
+    :artists :albums :songs :uptime :db_playtime :db_update
+    :outputid)
   "List of keys which values must be integers.")
 
 (defparameter *value-processing-functions*
   '(:time parse-time :state to-keyword
-    :random string-not-zerop :repeat string-not-zerop))
+    :random string-not-zerop :repeat string-not-zerop
+    :outputenabled string-not-zerop))
 
 (defmethod print-object ((object track) stream)
   (print-unreadable-object (object stream :type t :identity t)

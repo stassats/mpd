@@ -50,7 +50,7 @@
    #:move-in-playlist
    #:find-in-current-playlist
    #:search-in-current-playlist
-   
+
    #:update
 
    #:list-all
@@ -101,4 +101,12 @@
    #:bitrate
    #:duration
    #:songid
-   #:song))
+   #:song
+
+   #:artists
+   #:albums
+   #:songs
+   #:uptime
+   #:playtime
+   #:db-playtime
+   #:db-update))

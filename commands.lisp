@@ -23,11 +23,11 @@
       (make-class track 'playlist))))
 
 (defcommand disable-output (id)
-  (check-args integer id)
+  (check-args unsigned-byte id)
   (send "disableoutput" id))
 
 (defcommand enable-output (id)
-  (check-args integer id)
+  (check-args unsigned-byte id)
   (send "enableoutput" id))
 
 (defcommand ping ()
@@ -44,7 +44,7 @@
 
 (defcommand stats ()
   "Return statisics."
-  (split-values (send "stats")))
+  (make-class (send "stats") 'stats))
 
 (defcommand outputs ()
   "Return information about all outputs."
@@ -66,7 +66,7 @@
   (send "pause"))
 
 (defcommand play (&optional song-number)
-  (check-args (or integer null) song-number)
+  (check-args (or unsigned-byte null) song-number)
   "Begin playing the playlist starting from song-number, default is 0."
   (send "play" song-number))
 
@@ -121,7 +121,7 @@
 
 (defcommand playlist-info (&optional id)
   "Return content of the current playlist."
-  (check-args (or integer null) id)
+  (check-args (or unsigned-byte null) id)
   (if id
       (make-class (send "playlistinfo" id) 'playlist)
       (parse-list (send "playlistinfo") 'playlist)))
@@ -144,13 +144,13 @@
 (defcommand delete-from-playlist (name song-id)
   "Delete `song-id' from playlist `name'."
   (check-args string name)
-  (check-args integer song-id)
+  (check-args unsigned-byte song-id)
   (send "playlistdelete" name song-id))
 
 (defcommand move-in-playlist (name song-id position)
   "Move `song-id' in playlist `name' to `position'."
   (check-args string name)
-  (check-args integer song-id position)
+  (check-args unsigned-byte song-id position)
   (send "playlistmove" name song-id position))
 
 (defcommand find-in-current-playlist (scope query)
@@ -185,7 +185,7 @@
 
 (defcommand move (from to)
   "Move track from `from' to `to' in the playlist."
-  (check-args integer from to)
+  (check-args unsigned-byte from to)
   (unless (= from to)
     (send "move" from to)))
 
@@ -196,11 +196,12 @@
   (move-id connection (id track) to))
 
 (defmethod-command move-id ((id integer) (to integer))
+  (check-args unsigned-byte id to)
   (send "moveid" id to))
 
 (defcommand swap (first second)
   "Swap positions of two tracks."
-  (check-args integer first second)
+  (check-args unsigned-byte first second)
   (unless (= first second)
     (send "swap" first second)))
 
@@ -211,11 +212,12 @@
   (swap-id connection (id first) (id second)))
 
 (defmethod-command swap-id ((first integer) (second integer))
+  (check-args unsigned-byte first second)
   (send "swap" first second))
 
 (defcommand delete-track (number)
   "Delete track from playlist."
-  (check-args integer number)
+  (check-args unsigned-byte number)
   (send "delete" number))
 
 (defgeneric delete-id (connection id)
@@ -225,6 +227,7 @@
   (delete-id connection (id id)))
 
 (defmethod-command delete-id ((id integer))
+  (check-args unsigned-byte id)
   (send "deleteid" id))
 
 (defcommand shuffle ()
@@ -235,6 +238,7 @@
 
 (defcommand update (&optional path)
   "Scan directory for music files and add them to the database."
+  (check-args string path)
   (send "update" path))
 
 (defcommand find-tracks (type what)
@@ -307,4 +311,5 @@ Return: (number playtime)."
   (seek-id connection (id song) time))
 
 (defmethod-command seek-id ((song integer) (time integer))
+  (check-args unsigned-byte song time)
   (send "seekid" song time))
