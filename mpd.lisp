@@ -10,9 +10,9 @@
 
 (defun connect (&key (host *defualt-host*) (port *default-port*) password)
   "Connect to MPD."
-  (let ((connection (socket-connect host port)))
+  (let ((connection (usocket:socket-connect host port)))
     (prog1 (values connection
-                   (read-answer (socket-stream connection)))
+                   (read-answer (usocket:socket-stream connection)))
       (when password
         (password connection password)))))
 
@@ -27,7 +27,7 @@
   ;; Error format: `ACK [<error id>@<position>] {<comand name>} <description>'
   (let* ((error-id (parse-integer text :start 5 :junk-allowed t))
          (delimiter (position #\] text))
-         (condition (cdr (assoc error-id +error-ids-alist+))))
+         (condition (cdr (assoc error-id *error-ids-alist*))))
     (error condition :text (subseq text (+ delimiter 2)))))
 
 (defmacro with-mpd ((var &rest options) &body body)
@@ -38,7 +38,7 @@
 
 (defun send-command (connection command)
   "Send command to MPD."
-  (let ((stream (socket-stream connection)))
+  (let ((stream (usocket:socket-stream connection)))
     (unless (open-stream-p stream)
       (error 'mpd-error :text (format nil "The stream ~A is not opened." stream)))
     (write-line command stream)
@@ -52,11 +52,9 @@
 
 (defun split-value (string)
   "Split a string `key: value' into (list :key value)."
-  (let* ((column-position (position #\: string))
-         (key (to-keyword
-               (subseq string 0 column-position)))
-         (value (subseq string (+ 2 column-position))))
-    (process-value key value)))
+  (let ((column (position #\: string)))
+    (process-value (to-keyword (subseq string 0 column))
+                   (subseq string (+ 2 column)))))
 
 (defun split-values (strings)
   "Transform a list of strings 'key: value' into the plist."
@@ -81,7 +79,8 @@
               (parse-integer time :start (1+ stop))))))
 
 (defun string-not-zerop (string)
-  (not (string= string "0")))
+  (when (string/= string "0")
+    t))
 
 (defun filter-keys (strings)
   "Transform a list of strings 'key: value' into a list of values."
@@ -100,8 +99,7 @@
   (let (track)
     (flet ((create-track ()
              (when track
-               (list
-                (apply 'make-instance class track)))))
+               (list (apply 'make-instance class track)))))
       (nconc
        (mapcan (lambda (x)
                  (let ((pair (split-value x)))
@@ -118,7 +116,7 @@
 ;;;
 
 (defun process-string (string)
-  "Check for emtpy strings, end escape strings when needed."
+  "Check for emtpy strings, and escape strings when needed."
   (when string
     (let ((string
            (string-trim '(#\Space #\Tab #\Newline) string)))
@@ -137,16 +135,12 @@
                          (remove nil (list ,@commands)))))
 
 (defmacro defcommand (name parameters &body body)
-  (multiple-value-bind (forms decl doc) (parse-body body :documentation t)
-    `(defun ,name (connection ,@parameters)
-       ,@decl ,doc
-       ,@forms)))
+  `(defun ,name (connection ,@parameters)
+     ,@body))
 
 (defmacro defmethod-command (name parameters &body body)
-  (multiple-value-bind (forms decl) (parse-body body)
-    `(defmethod ,name (connection ,@parameters)
-       ,@decl
-       ,@forms)))
+  `(defmethod ,name (connection ,@parameters)
+     ,@body))
 
 (defmacro check-args (type &rest args)
   "Check string and integer arguments."

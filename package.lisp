@@ -1,9 +1,9 @@
 ;;; -*- Mode: Lisp -*-
 
-(in-package :cl-user)
+(in-package #:cl-user)
 
 (defpackage #:mpd
-  (:use #:cl #:usocket #:alexandria)
+  (:use #:cl)
   (:export
    #:*defualt-host*
    #:*default-port*

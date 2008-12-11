@@ -20,7 +20,7 @@
                       not-permitted unknown-command not-exist
                       playlist-size-exceed already-updating exist)))
 
-(define-constant +error-ids-alist+
+(defparameter *error-ids-alist*
   '((2 . bad-argument)
     (3 . incorrect-password)
     (4 . not-permitted)
@@ -28,14 +28,12 @@
     (50 . not-exist)
     (51 . playlist-size-exceed)
     (54 . already-updating)
-    (56 . exist))
-  :test #'equal)
+    (56 . exist)))
 
-(define-constant +tag-types+
+(defparameter *tag-types*
   '(:artist :album :title :track :name :genre :date
     :composer :performer :comment :disc :filename :any)
-  :test #'equal
-  :documentation "Types of tags for using in `search' and `find'")
+  "Types of tags for using in `search' and `find'")
 
 (defclass track ()
   ((file
@@ -114,7 +112,7 @@
 (macrolet ((generate-commands (class names)
              `(progn
                 ,@(mapcar (lambda (name)
-                            `(defmethod ,name ((stream stream-usocket))
+                            `(defmethod ,name ((stream usocket:stream-usocket))
                                (,name (,class stream))))
                           names))))
   (generate-commands status

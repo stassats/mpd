@@ -14,7 +14,7 @@
 
 (defcommand disconnect ()
   "Close connection."
-  (socket-close connection))
+  (usocket:socket-close connection))
 
 (defcommand now-playing ()
   "Return instance of playlist with current song."
@@ -243,7 +243,7 @@
 
 (defcommand find-tracks (type what)
   "Find tracks in the database with a case sensitive, exact match."
-  (assert (member type +tag-types+))
+  (assert (member type *tag-types*))
   (check-args string what)
   (parse-list (send "find" type what) 'track))
 
@@ -255,7 +255,7 @@ then list all `metadata-1' in which `metadata-2' has value `search-term'."
 
 (defcommand search-tracks (type what)
   "Find tracks in the database with a case sensitive, inexact match."
-  (assert (member type +tag-types+))
+  (assert (member type *tag-types*))
   (check-args string what)
   (parse-list (send "search" type what) 'track))
 
