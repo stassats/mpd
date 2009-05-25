@@ -79,8 +79,7 @@
               (parse-integer time :start (1+ stop))))))
 
 (defun string-not-zerop (string)
-  (when (string/= string "0")
-    t))
+  (not (string= string "0")))
 
 (defun filter-keys (strings)
   "Transform a list of strings 'key: value' into a list of values."
@@ -104,8 +103,8 @@
        (mapcan (lambda (x)
                  (let ((pair (split-value x)))
                    (case (car pair)
-                     ((:file) (prog1 (create-track)
-                                (setf track pair)))
+                     (:file (prog1 (create-track)
+                              (setf track pair)))
                      ((:directory :playlist)
                       (list pair))
                      (t (nconc track pair)
