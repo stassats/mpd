@@ -66,6 +66,7 @@
    #:tag-types
    #:url-handlers
 
+   #:playlist
    #:track
    #:file
    #:title
