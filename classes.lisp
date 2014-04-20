@@ -57,8 +57,9 @@
    (track
     :initform nil :initarg :track :accessor track-number)
    (time
-    :initform nil :initarg :time :accessor duration
-    :type integer)))
+    :initform nil :initarg :time :accessor duration)
+   (last-modified
+    :initform nil :initarg :last-modified :accessor last-modified)))
 
 (defclass playlist (track)
   ((pos
