@@ -71,6 +71,7 @@
    #:file
    #:title
    #:artist
+   #:albumartist
    #:album
    #:date
    #:duration

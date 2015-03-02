@@ -42,6 +42,8 @@
     :initform nil :initarg :title :accessor title)
    (artist
     :initform nil :initarg :artist :accessor artist)
+   (albumartist
+    :initform nil :initarg :albumartist :accessor albumartist)
    (album
     :initform nil :initarg :album :accessor album)
    (genre
