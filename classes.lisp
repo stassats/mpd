@@ -94,7 +94,19 @@
     :reader duration :initarg :time :initform nil)
    (songid
     :reader songid :initarg :songid :initform nil)
-   (song :reader song :initarg :song :initform nil)))
+   (song :reader song :initarg :song :initform nil)
+   (nextsongid
+    :reader nextsongid :initarg :nextsongid :initform nil)
+   (nextsong 
+    :reader nextsong :initarg :nextsong :initform nil)
+   (elapsed
+    :reader elapsed :initarg :elapsed :initform nil)
+   (mixrampdb 
+    :reader mixrampdb :initarg :mixrampdb :initform nil)
+   (consume 
+    :reader consume :initarg :consume :initform nil)
+   (single 
+    :reader single :initarg :single :initform nil)))
 
 (defclass stats ()
   ((artists
