@@ -104,6 +104,12 @@
    #:duration
    #:songid
    #:song
+   #:nextsongid
+   #:nextsong
+   #:elapsed
+   #:mixrampdb
+   #:consume
+   #:single
 
    #:artists
    #:albums
