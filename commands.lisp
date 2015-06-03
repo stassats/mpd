@@ -251,6 +251,7 @@
   "List all metadata of `metadata-1'.
 If `metadata-2' & `search-term' are supplied,
 then list all `metadata-1' in which `metadata-2' has value `search-term'."
+  (check-args string search-term)
   (send "list" metadata-1 metadata-2 search-term))
 
 (defcommand search-tracks (type what)
