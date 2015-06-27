@@ -243,7 +243,7 @@
 
 (defcommand find-tracks (type what)
   "Find tracks in the database with a case sensitive, exact match."
-  (assert (member type *tag-types*))
+  (check-args tag-type type)
   (check-args string what)
   (parse-list (send "find" type what) 'track))
 
@@ -251,12 +251,12 @@
   "List all metadata of `metadata-1'.
 If `metadata-2' & `search-term' are supplied,
 then list all `metadata-1' in which `metadata-2' has value `search-term'."
-  (check-args string search-term)
+  (check-args (or string null) search-term)
   (send "list" metadata-1 metadata-2 search-term))
 
 (defcommand search-tracks (type what)
   "Find tracks in the database with a case sensitive, inexact match."
-  (assert (member type *tag-types*))
+  (check-args tag-type type)
   (check-args string what)
   (parse-list (send "search" type what) 'track))
 

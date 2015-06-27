@@ -122,7 +122,7 @@
       (when (zerop (length string))
         (error 'mpd-error :text "Zero length argument."))
       (if (position #\Space string)
-          (format nil "~s" string)
+          (prin1-to-string string)
           string))))
 
 ;;; Macros

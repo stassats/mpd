@@ -35,6 +35,9 @@
     :composer :performer :comment :disc :filename :any)
   "Types of tags for using in `search' and `find'")
 
+(deftype tag-type ()
+  `(member ,@*tag-types*))
+
 (defclass track ()
   ((file
     :initform nil :initarg :file :accessor file)
